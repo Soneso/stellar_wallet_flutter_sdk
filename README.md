@@ -108,6 +108,13 @@ Get anchor information from a TOML file  using [SEP-001](https://github.com/stel
 TomlInfo tomlInfo = await anchor.sep1();
 ```
 
+Upload KYC information to anchors using [SEP-012](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0012.md):
+
+```dart
+Sep12 sep12 = await anchor.sep12();
+AddCustomerResponse addResponse = await sep12.add({"account_id" : accountId});
+```
+
 Authenticate an account with the anchor using [SEP-010](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0010.md):
 
 ```dart

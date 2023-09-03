@@ -79,7 +79,6 @@ void main() {
   }
 
   test('test info', () async {
-    //final transferService = TransferServerSEP24Service(serviceAddress);
     http.Client anchorMock = MockClient((request) async {
       if (request.url.toString().contains(anchorDomain) &&
           request.url.toString().contains("stellar.toml")) {

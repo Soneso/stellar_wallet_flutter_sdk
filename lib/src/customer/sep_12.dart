@@ -66,6 +66,20 @@ class Sep12 {
     return AddCustomerResponse.from(infoResponse);
   }
 
+  /// This endpoint allows servers to accept data values, usually confirmation codes, that verify a previously provided field via add.
+  /// Pass a map containing the sep 9 [verificationFields] for the customer identified by [id].
+  Future<GetCustomerResponse> verify(Map<String, String> verificationFields, String id) async {
+    flutter_sdk.PutCustomerVerificationRequest request =
+    flutter_sdk.PutCustomerVerificationRequest();
+    request.jwt = token.jwt;
+    request.id = id;
+    request.verificationFields = verificationFields;
+
+    flutter_sdk.GetCustomerInfoResponse infoResponse =
+    await kycService.putCustomerVerification(request);
+    return GetCustomerResponse.from(infoResponse);
+  }
+
   /// Delete a customer using [account] address.
   Future<http.Response> delete(String account,
       {String? memo, String? memoType}) async {
