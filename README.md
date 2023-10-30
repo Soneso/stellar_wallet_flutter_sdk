@@ -13,7 +13,7 @@ utilizes [Flutter Stellar SDK](https://github.com/Soneso/stellar_flutter_sdk) to
 1. Add the dependency to your pubspec.yaml file:
 ```
 dependencies:
-  stellar_wallet_flutter_sdk: ^0.0.1
+  stellar_wallet_flutter_sdk: ^0.0.2
 ```
 2. Install it (command line or IDE):
 ```
@@ -207,6 +207,8 @@ result.controller.stream.listen(
   }
 );
 ```
+
+A full SEP-024 example can be found in the project folder. To start it, navigate to `cd example` and run `flutter run`.
 
 ### Add client domain signing
 

@@ -1,18 +1,18 @@
 name: stellar_wallet_flutter_sdk
 description: Flutter Wallet SDK is a library that allows developers to build wallet applications on the Stellar network faster.
-version: 0.0.1
+version: 0.0.2
 homepage: https://github.com/Soneso/stellar_wallet_flutter_sdk
 
 environment:
-  sdk: '>=3.1.0 <4.0.0'
+  sdk: '>=3.0.0 <4.0.0'
   flutter: ">=1.17.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
-  stellar_flutter_sdk: ^1.6.2
-  http: ^0.13.5
+  stellar_flutter_sdk: ^1.6.9
+  http: ^1.0.0
   jwt_decoder: ^2.0.1
   logger: ^2.0.1
 

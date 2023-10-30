@@ -130,9 +130,9 @@ class Watcher {
             shouldExit = true;
             logger.d("CRITICAL: Couldn't invoke exception handler");
           }
-        } catch (e) {
+        } catch (e, stackTrace) {
           shouldExit = true;
-          logger.d("CRITICAL: Unknown error occurred: $e");
+          logger.d("CRITICAL: Unknown error occurred: $e stack trace: $stackTrace");
         }
         if (shouldExit) {
           timer.cancel();

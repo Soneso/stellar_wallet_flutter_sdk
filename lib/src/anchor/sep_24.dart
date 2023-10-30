@@ -548,11 +548,11 @@ abstract class ProcessingAnchorTransaction extends AnchorTransaction {
   int? statusEta;
   bool? kycVerified;
   String? amountInAsset;
-  String amountIn;
+  String? amountIn;
   String? amountOutAsset;
-  String amountOut;
+  String? amountOut;
   String? amountFeeAsset;
-  String amountFee;
+  String? amountFee;
   DateTime? completedAt;
   DateTime? updatedAt;
   String? stellarTransactionId;

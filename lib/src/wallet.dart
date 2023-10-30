@@ -19,7 +19,7 @@ const horizonLimitDefault = 10;
 
 /// Wallet SDK main entry point. It provides methods to build wallet applications on the Stellar network.
 class Wallet {
-  static const versionNumber = "0.0.1";
+  static const versionNumber = "0.0.2";
   static final Map<String, String> requestHeaders = {
     "X-Client-Name": "stellar_wallet_flutter_sdk",
     "X-Client-Version": versionNumber

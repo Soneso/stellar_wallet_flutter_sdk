@@ -32,6 +32,12 @@ class Anchor {
     return infoHolder.info;
   }
 
+  /// Get anchor information from a TOML file.
+  /// Returns TOML file content.
+  Future<TomlInfo> getInfo() async {
+    return infoHolder.info;
+  }
+
   /// Create new auth object to authenticate account with the anchor using SEP-10.
   /// Returns [Sep10] object.
   /// Throws [AnchorAuthNotSupported] if SEP-10 is not configured.
