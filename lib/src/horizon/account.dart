@@ -57,3 +57,16 @@ class AccountService {
     return SigningKeyPair(flutter_sdk.KeyPair.random());
   }
 }
+
+/// Account weights threshold
+class AccountThreshold {
+  int low;
+  int medium;
+  int high;
+
+  /// Constructor
+  /// @low Low threshold weight
+  /// @medium Medium threshold weight
+  /// @high High threshold weight
+  AccountThreshold(this.low, this.medium, this.high);
+}

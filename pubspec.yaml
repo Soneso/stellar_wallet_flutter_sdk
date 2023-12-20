@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  stellar_flutter_sdk: ^1.6.9
+  stellar_flutter_sdk: ^1.7.1
   http: ^1.0.0
   jwt_decoder: ^2.0.1
   logger: ^2.0.1

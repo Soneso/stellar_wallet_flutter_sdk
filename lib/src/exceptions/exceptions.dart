@@ -322,6 +322,26 @@ class NotRegisteredWithAllException implements RecoveryException {
   }
 }
 
+class Sep10AuthNotSupported implements RecoveryException {
+  Sep10AuthNotSupported(this.message, {this.cause}) : super();
+
+  @override
+  Exception? cause;
+
+  @override
+  String message;
+}
+
+class RecoveryServerResponseError implements RecoveryException {
+  RecoveryServerResponseError(this.message, {this.cause}) : super();
+
+  @override
+  Exception? cause;
+
+  @override
+  String message;
+}
+
 // customer exceptions
 
 class CustomerException implements WalletException {

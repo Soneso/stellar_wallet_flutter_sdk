@@ -24,13 +24,14 @@ class Sep10 {
       {this.httpClient});
 
   /// Authenticates to an external server.
-  /// Uses [userKeyPair] to sign the challenge. Optionally you can
+  /// Uses [userKeyPair] to extract the address to sign for. Optionally you can
   /// pass [momoId] to distinguish the account, [clientDomain] representing
   /// the client's domain hosting stellar.toml file containing `SIGNING_KEY`
   /// and a [clientDomainSigner] that can sign the challenge for the client if
-  /// needed. Returns the authentication token (jwt). Throws [AnchorAuthException]
+  /// needed. Alternatively if you want to sign with the [userKeyPair] it must be a [SigningKeyPair].
+  /// Returns the authentication token (jwt). Throws [AnchorAuthException]
   /// if the authentication fails.
-  Future<AuthToken> authenticate(SigningKeyPair userKeyPair,
+  Future<AuthToken> authenticate(AccountKeyPair userKeyPair,
       {int? memoId,
       String? clientDomain,
       WalletSigner? clientDomainSigner}) async {

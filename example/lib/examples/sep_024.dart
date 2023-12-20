@@ -138,8 +138,7 @@ Future<void> transferWithdrawalTransaction(Sep24 sep24, AuthToken authToken,
   } // ... etc.
 
   if (memo != null) {
-    transactionBuilder
-        .addMemo(flutter_sdk.MemoHash(base64Decode(tx.withdrawalMemo!)));
+    transactionBuilder.addMemo(memo);
   }
 
   flutter_sdk.KeyPair kp =
