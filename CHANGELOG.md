@@ -1,3 +1,6 @@
+## [0.0.3] - 21.Dec.2023.
+- add recovery service (sep-30)
+
 ## [0.0.2] - 30.Oct.2023.
 - add full example app with sep-24 example
 - allow null amount values for sep-24 transaction amounts

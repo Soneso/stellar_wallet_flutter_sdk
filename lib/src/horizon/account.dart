@@ -56,6 +56,43 @@ class AccountService {
   SigningKeyPair createKeyPair() {
     return SigningKeyPair(flutter_sdk.KeyPair.random());
   }
+
+  Future <flutter_sdk.AccountResponse> getInfo(String accountAddress) async {
+    var horizonUrl = cfg.stellar.horizonUrl;
+    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl);
+    try {
+      return  await sdk.accounts.account(accountAddress);
+    } catch (e) {
+      if (e is flutter_sdk.ErrorResponse) {
+        if (e.code != 404) {
+          throw HorizonRequestFailedException(e);
+        } else {
+          throw ValidationException("Account dose not exist");
+        }
+      } else {
+        rethrow;
+      }
+    }
+  }
+
+  Future <bool> accountExists(String accountAddress) async {
+    var horizonUrl = cfg.stellar.horizonUrl;
+    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl);
+    try {
+      await sdk.accounts.account(accountAddress);
+      return true;
+    } catch (e) {
+      if (e is flutter_sdk.ErrorResponse) {
+        if (e.code != 404) {
+          throw HorizonRequestFailedException(e);
+        } else {
+          return false;
+        }
+      } else {
+        rethrow;
+      }
+    }
+  }
 }
 
 /// Account weights threshold

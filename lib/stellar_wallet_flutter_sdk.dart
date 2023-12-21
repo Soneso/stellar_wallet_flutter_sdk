@@ -15,3 +15,4 @@ export 'src/asset/asset_id.dart';
 export 'src/anchor/anchor.dart';
 export 'src/anchor/sep_24.dart';
 export 'src/anchor/watcher.dart';
+export 'src/recovery/sep_30.dart';

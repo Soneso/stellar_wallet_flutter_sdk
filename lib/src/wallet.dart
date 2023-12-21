@@ -7,6 +7,8 @@ import 'dart:core';
 import 'package:http/http.dart' as http;
 import 'package:stellar_wallet_flutter_sdk/src/anchor/anchor.dart';
 import 'package:stellar_wallet_flutter_sdk/src/auth/wallet_signer.dart';
+import 'package:stellar_wallet_flutter_sdk/src/horizon/stellar.dart';
+import 'package:stellar_wallet_flutter_sdk/src/recovery/sep_30.dart';
 
 const baseReserveMinCount = 2;
 const baseReserve = 0.5;
@@ -19,7 +21,7 @@ const horizonLimitDefault = 10;
 
 /// Wallet SDK main entry point. It provides methods to build wallet applications on the Stellar network.
 class Wallet {
-  static const versionNumber = "0.0.2";
+  static const versionNumber = "0.0.3";
   static final Map<String, String> requestHeaders = {
     "X-Client-Name": "stellar_wallet_flutter_sdk",
     "X-Client-Version": versionNumber
@@ -35,9 +37,19 @@ class Wallet {
     }
   }
 
+  Stellar stellar() {
+    Config cfg = Config(stellarConfiguration, applicationConfiguration);
+    return Stellar(cfg);
+  }
+
   Anchor anchor(String homeDomain, {http.Client? httpClient}) {
     Config cfg = Config(stellarConfiguration, applicationConfiguration);
     return Anchor(cfg, homeDomain, httpClient: httpClient);
+  }
+
+  Recovery recovery(Map<RecoveryServerKey, RecoveryServer> servers, {http.Client? httpClient} ) {
+    Config cfg = Config(stellarConfiguration, applicationConfiguration);
+    return Recovery(cfg, servers, httpClient: httpClient);
   }
 }
 

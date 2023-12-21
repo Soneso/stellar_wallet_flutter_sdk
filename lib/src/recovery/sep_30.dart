@@ -22,8 +22,8 @@ abstract class AbstractAccountRecover {
       AccountKeyPair account,
       AccountKeyPair newKey,
       Map<RecoveryServerKey, RecoveryServerSigning> serverAuth,
-      AccountKeyPair? lostKey,
-      AccountKeyPair? sponsorAddress);
+      {AccountKeyPair? lostKey,
+      AccountKeyPair? sponsorAddress});
 }
 
 class AccountRecover extends AbstractAccountRecover {
@@ -44,8 +44,8 @@ class AccountRecover extends AbstractAccountRecover {
       AccountKeyPair account,
       AccountKeyPair newKey,
       Map<RecoveryServerKey, RecoveryServerSigning> serverAuth,
-      AccountKeyPair? lostKey,
-      AccountKeyPair? sponsorAddress) async {
+      {AccountKeyPair? lostKey,
+      AccountKeyPair? sponsorAddress}) async {
     var sdk = flutter_sdk.StellarSDK(stellar.horizonUrl);
     flutter_sdk.AccountResponse? stellarAccount;
     try {
@@ -59,6 +59,23 @@ class AccountRecover extends AbstractAccountRecover {
         }
       } else {
         rethrow;
+      }
+    }
+
+    flutter_sdk.AccountResponse? sponsorAcc;
+    if (sponsorAddress != null) {
+      try {
+        sponsorAcc = await sdk.accounts.account(sponsorAddress.address);
+      } catch (e) {
+        if (e is flutter_sdk.ErrorResponse) {
+          if (e.code != 404) {
+            throw HorizonRequestFailedException(e);
+          } else {
+            throw ValidationException("Sponsor account dose not exist");
+          }
+        } else {
+          rethrow;
+        }
       }
     }
 
@@ -82,7 +99,7 @@ class AccountRecover extends AbstractAccountRecover {
     }
 
     flutter_sdk.TransactionBuilder txBuilder =
-        flutter_sdk.TransactionBuilder(stellarAccount);
+        flutter_sdk.TransactionBuilder(sponsorAcc ?? stellarAccount);
     if (sponsorAddress != null) {
       flutter_sdk.BeginSponsoringFutureReservesOperationBuilder
           beginSponsoringBuilder =
@@ -117,7 +134,7 @@ class AccountRecover extends AbstractAccountRecover {
       flutter_sdk.EndSponsoringFutureReservesOperationBuilder
           endSponsorshipBuilder =
           flutter_sdk.EndSponsoringFutureReservesOperationBuilder();
-      endSponsorshipBuilder.setSourceAccount(sponsorAddress.address);
+      endSponsorshipBuilder.setSourceAccount(stellarAccount.accountId);
       txBuilder.addOperation(endSponsorshipBuilder.build());
     }
 
@@ -273,7 +290,8 @@ class Recovery extends AccountRecover {
       }
 
       return Sep10(cfg, server.homeDomain, server.authEndpoint,
-          stellarToml.generalInformation.signingKey!);
+          stellarToml.generalInformation.signingKey!,
+          httpClient: httpClient);
     } else {
       throw ValidationException("key not found in servers map");
     }
@@ -316,7 +334,9 @@ class Recovery extends AccountRecover {
       AccountKeyPair accountAddress,
       Map<RecoveryServerKey, String> auth) async {
     Map<RecoveryServerKey, RecoverableAccountInfo> result = {};
-    auth.forEach((key, value) async {
+    for (var entry in auth.entries) {
+      var key = entry.key;
+      var value = entry.value;
       if (servers.containsKey(key)) {
         RecoveryServer server = servers[key]!;
 
@@ -339,7 +359,7 @@ class Recovery extends AccountRecover {
       } else {
         throw ValidationException("key not found in servers map");
       }
-    });
+    }
     return result;
   }
 
@@ -395,11 +415,7 @@ class Recovery extends AccountRecover {
           beginSponsoringBuilder =
           flutter_sdk.BeginSponsoringFutureReservesOperationBuilder(
               account.address);
-      if (acc != null) {
-        beginSponsoringBuilder.setSourceAccount(acc.accountId);
-      } else {
-        beginSponsoringBuilder.setSourceAccount(sponsorAcc.accountId);
-      }
+      beginSponsoringBuilder.setSourceAccount(sponsorAcc.accountId);
       txBuilder.addOperation(beginSponsoringBuilder.build());
       if (acc == null) {
         flutter_sdk.CreateAccountOperationBuilder createAccountBuilder =
@@ -411,11 +427,7 @@ class Recovery extends AccountRecover {
       flutter_sdk.EndSponsoringFutureReservesOperationBuilder
           endSponsorshipBuilder =
           flutter_sdk.EndSponsoringFutureReservesOperationBuilder();
-      if (acc != null) {
-        endSponsorshipBuilder.setSourceAccount(acc.accountId);
-      } else {
-        endSponsorshipBuilder.setSourceAccount(sponsorAcc.accountId);
-      }
+      endSponsorshipBuilder.setSourceAccount(account.address);
       txBuilder.addOperation(endSponsorshipBuilder.build());
     } else {
       txBuilder =
@@ -457,7 +469,9 @@ class Recovery extends AccountRecover {
   Future<List<String>> _enrollWithRecoveryServer(AccountKeyPair account,
       Map<RecoveryServerKey, List<RecoveryAccountIdentity>> identityMap) async {
     List<String> result = List<String>.empty(growable: true);
-    servers.forEach((key, server) async {
+    for (var entry in servers.entries) {
+      var key = entry.key;
+      var server = entry.value;
       if (!identityMap.containsKey(key)) {
         throw ValidationException(
             "Account identity for server ${key.name} was not specified");
@@ -483,7 +497,7 @@ class Recovery extends AccountRecover {
         throw NoAccountSignersException();
       }
       result.add(response.signers.first.key);
-    });
+    }
     return result;
   }
 }
@@ -519,9 +533,9 @@ class RecoveryServer {
   String? clientDomain;
 
   /// Constructor
-  /// @endpoint main endpoint (root domain) of SEP-30 recovery server. E.g. `https://testanchor.stellar.org`
-  /// @authEndpoint SEP-10 auth endpoint to be used. Should be in format `<https://domain/auth>`. E.g. `https://testanchor.stellar.org/auth`)
-  /// @homeDomain is a SEP-10 home domain. E.g. `testanchor.stellar.org`
+  /// @endpoint main endpoint (root domain) of SEP-30 recovery server. E.g. `https://recovery.example.com` or `https://example.com/recovery`, etc.
+  /// @authEndpoint SEP-10 auth endpoint to be used. Should be in format `<https://...>`. E.g. `https://example.com/auth` or `https://auth.example.com` etc. )
+  /// @homeDomain is a SEP-10 home domain. E.g. `recovery.example.com` or `example.com`, etc.
   /// @walletSigner optional [WalletSigner] used to sign authentication
   /// @clientDomain optional client domain
   RecoveryServer(this.endpoint, this.authEndpoint, this.homeDomain,
@@ -570,6 +584,8 @@ class RecoveryType {
   static const stellarAddress = RecoveryType._internal("stellar_address");
   static const phoneNumber = RecoveryType._internal("phone_number");
   static const email = RecoveryType._internal("email");
+
+  RecoveryType(this._value);
 
   @override
   bool operator ==(Object other) {
@@ -620,6 +636,8 @@ class RecoveryRole {
   static const owner = RecoveryRole._internal("owner");
   static const sender = RecoveryRole._internal("sender");
   static const receiver = RecoveryRole._internal("receiver");
+
+  RecoveryRole(this._value);
 
   @override
   bool operator ==(Object other) {
@@ -681,13 +699,14 @@ class RecoverableAccountInfo {
 }
 
 class RecoverableIdentity {
-  String role;
+  RecoveryRole role;
   bool? authenticated;
 
   RecoverableIdentity(this.role, this.authenticated);
 
   static RecoverableIdentity from(flutter_sdk.SEP30ResponseIdentity response) {
-    return RecoverableIdentity(response.role, response.authenticated);
+    return RecoverableIdentity(
+        RecoveryRole(response.role), response.authenticated);
   }
 }
 
