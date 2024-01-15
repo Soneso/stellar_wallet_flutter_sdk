@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sliver_tools/sliver_tools.dart';
+import 'examples/sep_001.dart' as sep01Example;
+import 'examples/sep_010.dart' as sep10Example;
 import 'examples/sep_024.dart' as sep24Example;
 
 void main() {
@@ -46,6 +48,14 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
               _SliverPinnedHeader(
                 text: 'Examples:',
+              ),
+              _SliverListTile(
+                title: Text('SEP-001'),
+                onTap: () => sep01Example.runExample(),
+              ),
+              _SliverListTile(
+                title: Text('SEP-010'),
+                onTap: () => sep10Example.runExample(),
               ),
               _SliverListTile(
                 title: Text('SEP-024'),
