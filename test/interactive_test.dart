@@ -94,7 +94,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    Wallet wallet = Wallet(StellarConfiguration.testNet);
+    Wallet wallet = Wallet.testNet;
     Anchor anchor = wallet.anchor(anchorDomain, httpClient: anchorMock);
     AnchorServiceInfo serviceInfo = await anchor.sep24().getServiceInfo();
     assert(serviceInfo.deposit.length == 3);
@@ -161,7 +161,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    Wallet wallet = Wallet(StellarConfiguration.testNet);
+    Wallet wallet = Wallet.testNet;
     Anchor anchor = wallet.anchor(anchorDomain, httpClient: anchorMock);
     Sep24 sep24 = anchor.sep24();
     TomlInfo info = await anchor.sep1();
@@ -203,7 +203,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    Wallet wallet = Wallet(StellarConfiguration.testNet);
+    Wallet wallet = Wallet.testNet;
     Anchor anchor = wallet.anchor(anchorDomain, httpClient: anchorMock);
     Sep24 sep24 = anchor.sep24();
     TomlInfo info = await anchor.sep1();
@@ -241,7 +241,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    Wallet wallet = Wallet(StellarConfiguration.testNet);
+    Wallet wallet = Wallet.testNet;
     Anchor anchor = wallet.anchor(anchorDomain, httpClient: anchorMock);
 
     TomlInfo info = await anchor.sep1();
@@ -321,7 +321,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    Wallet wallet = Wallet(StellarConfiguration.testNet);
+    Wallet wallet = Wallet.testNet;
     Anchor anchor = wallet.anchor(anchorDomain, httpClient: anchorMock);
 
     AuthToken token = AuthToken(jwtToken);
@@ -384,7 +384,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    Wallet wallet = Wallet(StellarConfiguration.testNet);
+    Wallet wallet = Wallet.testNet;
     Anchor anchor = wallet.anchor(anchorDomain, httpClient: anchorMock);
 
     AuthToken token = AuthToken(jwtToken);
@@ -418,7 +418,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    Wallet wallet = Wallet(StellarConfiguration.testNet);
+    Wallet wallet = Wallet.testNet;
     Anchor anchor = wallet.anchor(anchorDomain, httpClient: anchorMock);
 
     TomlInfo info = await anchor.sep1();
@@ -446,7 +446,7 @@ void main() {
       return http.Response(json.encode(mapJson), 404);
     });
 
-    Wallet wallet = Wallet(StellarConfiguration.testNet);
+    Wallet wallet = Wallet.testNet;
     Anchor anchor = wallet.anchor(anchorDomain, httpClient: anchorMock);
 
     AuthToken token = AuthToken(jwtToken);
@@ -495,7 +495,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    Wallet wallet = Wallet(StellarConfiguration.testNet);
+    Wallet wallet = Wallet.testNet;
     Anchor anchor = wallet.anchor(anchorDomain, httpClient: anchorMock);
 
     AuthToken token = AuthToken(jwtToken);
@@ -580,7 +580,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    Wallet wallet = Wallet(StellarConfiguration.testNet);
+    Wallet wallet = Wallet.testNet;
     Anchor anchor = wallet.anchor(anchorDomain, httpClient: anchorMock);
 
     AuthToken token = AuthToken(jwtToken);

@@ -346,8 +346,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    wallet_sdk.Wallet wallet =
-        wallet_sdk.Wallet(wallet_sdk.StellarConfiguration.testNet);
+    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
     wallet_sdk.Anchor anchor =
         wallet.anchor(anchorDomain, httpClient: anchorMock);
     wallet_sdk.SigningKeyPair authKey =
@@ -420,8 +419,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    wallet_sdk.Wallet wallet =
-        wallet_sdk.Wallet(wallet_sdk.StellarConfiguration.testNet);
+    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
     wallet_sdk.Anchor anchor =
         wallet.anchor(anchorDomain, httpClient: anchorMock);
     wallet_sdk.SigningKeyPair userAuthKey =
@@ -475,8 +473,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    wallet_sdk.Wallet wallet =
-        wallet_sdk.Wallet(wallet_sdk.StellarConfiguration.testNet);
+    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
     wallet_sdk.Anchor anchor =
         wallet.anchor(anchorDomain, httpClient: anchorMock);
     wallet_sdk.SigningKeyPair authKey =
@@ -502,8 +499,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    wallet_sdk.Wallet wallet =
-        wallet_sdk.Wallet(wallet_sdk.StellarConfiguration.testNet);
+    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
     wallet_sdk.Anchor anchor =
         wallet.anchor(anchorDomain, httpClient: anchorMock);
     wallet_sdk.SigningKeyPair authKey =
@@ -536,8 +532,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    wallet_sdk.Wallet wallet =
-        wallet_sdk.Wallet(wallet_sdk.StellarConfiguration.testNet);
+    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
     wallet_sdk.Anchor anchor =
         wallet.anchor(anchorDomain, httpClient: anchorMock);
     wallet_sdk.SigningKeyPair authKey =
@@ -570,8 +565,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    wallet_sdk.Wallet wallet =
-        wallet_sdk.Wallet(wallet_sdk.StellarConfiguration.testNet);
+    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
     wallet_sdk.Anchor anchor =
         wallet.anchor(anchorDomain, httpClient: anchorMock);
     wallet_sdk.SigningKeyPair authKey =
@@ -604,8 +598,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    wallet_sdk.Wallet wallet =
-        wallet_sdk.Wallet(wallet_sdk.StellarConfiguration.testNet);
+    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
     wallet_sdk.Anchor anchor =
         wallet.anchor(anchorDomain, httpClient: anchorMock);
     wallet_sdk.SigningKeyPair authKey =
@@ -638,8 +631,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    wallet_sdk.Wallet wallet =
-        wallet_sdk.Wallet(wallet_sdk.StellarConfiguration.testNet);
+    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
     wallet_sdk.Anchor anchor =
         wallet.anchor(anchorDomain, httpClient: anchorMock);
     wallet_sdk.SigningKeyPair authKey =
@@ -672,8 +664,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    wallet_sdk.Wallet wallet =
-        wallet_sdk.Wallet(wallet_sdk.StellarConfiguration.testNet);
+    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
     wallet_sdk.Anchor anchor =
         wallet.anchor(anchorDomain, httpClient: anchorMock);
     wallet_sdk.SigningKeyPair authKey =
@@ -706,8 +697,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    wallet_sdk.Wallet wallet =
-        wallet_sdk.Wallet(wallet_sdk.StellarConfiguration.testNet);
+    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
     wallet_sdk.Anchor anchor =
         wallet.anchor(anchorDomain, httpClient: anchorMock);
     wallet_sdk.SigningKeyPair authKey =
@@ -740,8 +730,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    wallet_sdk.Wallet wallet =
-        wallet_sdk.Wallet(wallet_sdk.StellarConfiguration.testNet);
+    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
     wallet_sdk.Anchor anchor =
         wallet.anchor(anchorDomain, httpClient: anchorMock);
     wallet_sdk.SigningKeyPair authKey =
@@ -774,8 +763,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    wallet_sdk.Wallet wallet =
-        wallet_sdk.Wallet(wallet_sdk.StellarConfiguration.testNet);
+    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
     wallet_sdk.Anchor anchor =
         wallet.anchor(anchorDomain, httpClient: anchorMock);
     wallet_sdk.SigningKeyPair authKey =
@@ -808,8 +796,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    wallet_sdk.Wallet wallet =
-        wallet_sdk.Wallet(wallet_sdk.StellarConfiguration.testNet);
+    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
     wallet_sdk.Anchor anchor =
         wallet.anchor(anchorDomain, httpClient: anchorMock);
     wallet_sdk.SigningKeyPair authKey =
@@ -842,8 +829,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    wallet_sdk.Wallet wallet =
-        wallet_sdk.Wallet(wallet_sdk.StellarConfiguration.testNet);
+    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
     wallet_sdk.Anchor anchor =
         wallet.anchor(anchorDomain, httpClient: anchorMock);
     wallet_sdk.SigningKeyPair authKey =
@@ -878,8 +864,7 @@ void main() {
       return http.Response(json.encode(mapJson), 400);
     });
 
-    wallet_sdk.Wallet wallet =
-        wallet_sdk.Wallet(wallet_sdk.StellarConfiguration.testNet);
+    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
     wallet_sdk.Anchor anchor =
         wallet.anchor(anchorDomain, httpClient: anchorMock);
     wallet_sdk.SigningKeyPair authKey =

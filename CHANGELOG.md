@@ -1,3 +1,9 @@
+## [0.1.0] - 17.Jan.2024.
+- add stellar functionality for typical wallet flows
+- extend examples
+- extend tests
+- extend docs
+
 ## [0.0.3] - 21.Dec.2023.
 - add recovery service (sep-30)
 

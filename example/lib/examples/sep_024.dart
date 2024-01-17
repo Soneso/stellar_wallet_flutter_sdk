@@ -19,7 +19,7 @@ final sdk = flutter_sdk.StellarSDK.TESTNET;
 final network = flutter_sdk.Network.TESTNET;
 
 Future<void> runExample() async {
-  final wallet = Wallet(StellarConfiguration.testNet);
+  final wallet = Wallet.testNet;
   final anchor = wallet.anchor(domain);
   final sep24 = anchor.sep24();
 

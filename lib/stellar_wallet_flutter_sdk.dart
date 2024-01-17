@@ -7,6 +7,8 @@ library stellar_wallet_flutter_sdk;
 export 'src/wallet.dart';
 export 'src/toml/stellar_toml.dart';
 export 'src/horizon/account.dart';
+export 'src/horizon/stellar.dart';
+export 'src/horizon/transaction.dart';
 export 'src/exceptions/exceptions.dart';
 export 'src/customer/sep_12.dart';
 export 'src/auth/sep_10.dart';

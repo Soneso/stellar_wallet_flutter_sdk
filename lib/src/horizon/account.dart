@@ -21,6 +21,11 @@ abstract class AccountKeyPair {
 
 class PublicKeyPair extends AccountKeyPair {
   PublicKeyPair(super.keyPair);
+
+  static PublicKeyPair fromAccountId(String accountId) {
+    var kp = flutter_sdk.KeyPair.fromAccountId(accountId);
+    return PublicKeyPair(kp);
+  }
 }
 
 class SigningKeyPair extends AccountKeyPair {
@@ -102,8 +107,8 @@ class AccountThreshold {
   int high;
 
   /// Constructor
-  /// @low Low threshold weight
-  /// @medium Medium threshold weight
-  /// @high High threshold weight
+  /// [low] threshold weight
+  /// [medium] threshold weight
+  /// [high] threshold weight
   AccountThreshold(this.low, this.medium, this.high);
 }

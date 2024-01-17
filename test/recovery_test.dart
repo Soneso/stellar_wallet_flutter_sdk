@@ -48,7 +48,7 @@ void main() {
   const String emailAuthToken = "super secure email login token";
 
   final Random random = Random.secure();
-  Wallet wallet = Wallet(StellarConfiguration.testNet);
+  Wallet wallet = Wallet.testNet;
   var accountKp = wallet.stellar().account().createKeyPair();
   var deviceKp = wallet.stellar().account().createKeyPair();
   var recoveryKp = wallet.stellar().account().createKeyPair();

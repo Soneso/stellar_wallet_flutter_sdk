@@ -21,11 +21,17 @@ const horizonLimitDefault = 10;
 
 /// Wallet SDK main entry point. It provides methods to build wallet applications on the Stellar network.
 class Wallet {
-  static const versionNumber = "0.0.3";
+  static const versionNumber = "0.1.0";
+
   static final Map<String, String> requestHeaders = {
     "X-Client-Name": "stellar_wallet_flutter_sdk",
     "X-Client-Version": versionNumber
   };
+
+  static final Wallet publicNet = Wallet(StellarConfiguration.publicNet);
+  static final Wallet testNet = Wallet(StellarConfiguration.testNet);
+  static final Wallet futureNet = Wallet(StellarConfiguration.futureNet);
+
   StellarConfiguration stellarConfiguration;
   late ApplicationConfiguration applicationConfiguration;
 
@@ -75,13 +81,13 @@ class StellarConfiguration {
   /// default transaction timeout
   Duration defaultTimeout;
 
-  /// optional HTTP client configuration to be used for Horizon calls.
-  http.Client? horizonClient;
+  /// optional HTTP client to be used for network requests.
+  http.Client? httpClient;
 
   StellarConfiguration(this.network, this.horizonUrl,
-      {this.baseFee = 100,
+      {this.baseFee = flutter_sdk.AbstractTransaction.MIN_BASE_FEE,
       this.defaultTimeout = const Duration(minutes: 3),
-      this.horizonClient});
+      this.httpClient});
 }
 
 /// Application configuration

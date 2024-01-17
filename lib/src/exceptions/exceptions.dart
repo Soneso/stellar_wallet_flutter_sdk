@@ -57,6 +57,19 @@ class ValidationException implements WalletException {
   ValidationException(this.message, {this.cause}) : super();
 }
 
+class InvalidStartingBalanceException implements ValidationException {
+  @override
+  Exception? cause;
+
+  @override
+  late String message;
+
+  InvalidStartingBalanceException() : super() {
+    message =
+        "Starting balance must be at least 1 XLM for non-sponsored accounts and at least 0 XLM for sponsored accounts";
+  }
+}
+
 class ClientDomainWithMemoException implements ValidationException {
   @override
   Exception? cause;
@@ -91,19 +104,6 @@ class InvalidMemoIdException implements ValidationException {
 
   InvalidMemoIdException() : super() {
     message = "Memo ID must be a positive integer";
-  }
-}
-
-class InvalidStartingBalanceException implements ValidationException {
-  @override
-  Exception? cause;
-
-  @override
-  late String message;
-
-  InvalidStartingBalanceException() : super() {
-    message =
-        "Starting balance must be at least 1 XLM for non-sponsored accounts";
   }
 }
 

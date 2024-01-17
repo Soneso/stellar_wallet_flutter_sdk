@@ -1,9 +1,8 @@
 import 'package:stellar_wallet_flutter_sdk/stellar_wallet_flutter_sdk.dart';
 
 Future<void> runExample() async {
-  final wallet = Wallet(StellarConfiguration.testNet);
-  const anchorDomain = "testanchor.stellar.org";
-  final anchor = wallet.anchor(anchorDomain);
+  final wallet = Wallet.testNet;
+  final anchor = wallet.anchor("testanchor.stellar.org");
 
   // Get sep-001 info from the anchor server
   // This will parse the stellar toml data from

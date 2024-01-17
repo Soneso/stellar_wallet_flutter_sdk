@@ -1,11 +1,7 @@
-import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
 import 'package:stellar_wallet_flutter_sdk/stellar_wallet_flutter_sdk.dart';
 
-final sdk = flutter_sdk.StellarSDK.TESTNET;
-final network = flutter_sdk.Network.TESTNET;
-
 Future<void> runExample() async {
-  final wallet = Wallet(StellarConfiguration.testNet);
+  final wallet = Wallet.testNet;
   const anchorDomain = "testanchor.stellar.org";
   final anchor = wallet.anchor(anchorDomain);
 
@@ -14,7 +10,7 @@ Future<void> runExample() async {
   print("SEP 10 web auth endpoint: ${info.webAuthEndpoint}");
 
   // Prepare a new user account for this example.
-  final userKeyPair = SigningKeyPair(flutter_sdk.KeyPair.random());
+  final userKeyPair = wallet.stellar().account().createKeyPair();
 
   // Basic Authentication
   final sep10 = await anchor.sep10();

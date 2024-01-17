@@ -3,6 +3,7 @@ import 'package:sliver_tools/sliver_tools.dart';
 import 'examples/sep_001.dart' as sep01Example;
 import 'examples/sep_010.dart' as sep10Example;
 import 'examples/sep_024.dart' as sep24Example;
+import 'examples/sep_030.dart' as sep30Example;
 
 void main() {
   runApp(const MyApp());
@@ -60,6 +61,9 @@ class _MyHomePageState extends State<MyHomePage> {
               _SliverListTile(
                 title: Text('SEP-024'),
                 onTap: () => sep24Example.runExample(),
+              ),_SliverListTile(
+                title: Text('SEP-030'),
+                onTap: () => sep30Example.runExample(),
               ),
             ],
           ),
