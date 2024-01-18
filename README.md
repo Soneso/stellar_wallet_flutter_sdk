@@ -105,7 +105,7 @@ var appConfig = ApplicationConfiguration(defaultClient: myClient);
 var walletCustomClient = Wallet(StellarConfiguration.testNet, applicationConfiguration: appConfig);
 ```
 
-Some [test cases]((https://github.com/Soneso/stellar_wallet_flutter_sdk/tree/main/test)) of this SDK use for example `MockClient`.
+Some [test cases](https://github.com/Soneso/stellar_wallet_flutter_sdk/tree/main/test) of this SDK use for example `MockClient`.
 
 ### Stellar Basics
 

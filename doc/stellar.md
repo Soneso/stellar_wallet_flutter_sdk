@@ -44,6 +44,8 @@ var tx = txBuilder.lockAccountMasterKey().build();
 Add a new signer to the account. Use caution when adding new signers and make sure you set the correct signer weight. Otherwise, you will lock the account irreversibly.
 
 ```dart
+var newSignerKeyPair = account.createKeyPair();
+
 var txBuilder = await stellar.transaction(sourceAccountKeyPair);
 var tx = txBuilder.addAccountSigner(newSignerKeyPair, 10).build();
 ```
@@ -67,15 +69,21 @@ var tx = txBuilder.setThreshold(low: 1, medium: 10, high: 20).build();
 Add an asset (trustline) to the account. This allows the account to receive transfers of the asset.
 
 ```dart
-var asset = IssuedAssetId(code: "USDC", issuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5");
+var asset = IssuedAssetId(
+    code: "USDC",
+    issuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5");
+
 var txBuilder = await stellar.transaction(sourceAccountKeyPair);
-txBuilder.addAssetSupport(asset).build();
+var tx = txBuilder.addAssetSupport(asset).build();
 ```
 
 Remove an asset from the account (the asset's balance must be 0).
 
 ```dart
-var asset = IssuedAssetId(code: "USDC", issuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5");
+var asset = IssuedAssetId(
+    code: "USDC",
+    issuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5");
+
 var txBuilder = await stellar.transaction(sourceAccountKeyPair);
 txBuilder.removeAssetSupport(asset).build();
 ```
@@ -85,7 +93,8 @@ txBuilder.removeAssetSupport(asset).build();
 In some cases a private key may not be known prior to forming a transaction. For example, a new account must be funded to exist and the wallet may not have the key for the account so may request the create account transaction to be sponsored by a third party.
 
 ```dart
-var externalKeyPair = PublicKeyPair.fromAccountId("G...");
+// Third-party key that will sponsor creating new account
+var externalKeyPair = PublicKeyPair.fromAccountId("GC5GD...");
 var newKeyPair = account.createKeyPair();
 ```
 First, the account must be created.
@@ -129,7 +138,7 @@ var modifyAccountTransaction = txBuilder
 stellar.sign(modifyAccountTransaction, newKeyPair);
 
 // submit transaction to the network
-success = await stellar.submitTransaction(modifyAccountTransaction);
+bool success = await stellar.submitTransaction(modifyAccountTransaction);
 ```
 
 #### Sponsoring Transactions
@@ -233,7 +242,7 @@ bool success = await stellar.submitTransaction(feeBump);
 Note, that a wallet may not have a signing key for `sponsorKeyPair`. In that case, it's necessary to convert the transaction to XDR, send it to the server, containing `sponsorKey` and return the signed transaction back to the wallet. Let's use the previous example of sponsoring account creation, but this time with the sponsor key being unknown to the wallet. The first step is to define the public key of the sponsor keypair:
 
 ```dart
-var sponsorKeyPair = PublicKeyPair.fromAccountId("G...");
+var sponsorKeyPair = PublicKeyPair.fromAccountId("GC5GD...");
 ```
 
 Next, create an account in the same manner as before and sign it with `newKeyPair`. This time, convert the transaction to XDR:
@@ -256,7 +265,7 @@ It can now be sent to the server. On the server, sign it with a private key for 
 
 ```dart
 String signTransaction(String xdrString) {
-  var sponsorPrivateKey = SigningKeyPair.fromSecret("MySecret");
+  var sponsorPrivateKey = SigningKeyPair.fromSecret("SD3LH4...");
   
   var transaction = stellar.decodeTransaction(xdrString);
   stellar.sign(transaction, sponsorPrivateKey);
@@ -309,7 +318,7 @@ This will create and sign the transaction that originated from the sourceAccount
 It's very simple to use the Flutter Stellar SDK connecting to the same Horizon instance as a Wallet class. To do so, simply call:
 
 ```dart
-var server = stellar.server;
+var server = wallet.stellar().server;
 var transactions = await server.transactions.forAccount(newAccount.accountId).execute();
 ```
 
