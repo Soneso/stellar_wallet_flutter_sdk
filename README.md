@@ -65,6 +65,7 @@ The Wallet SDK provides an easy way to communicate with Anchors. It supports:
 - [SEP-012](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0012.md)
 - [SEP-024](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0024.md)
 - [SEP-030](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0030.md)
+- [SEP-038](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0038.md)
 
 
 Furthermore the wallet SDK provides extra functionality on top of the Flutter Stellar SDK. For interaction with the Stellar Network, the Flutter Wallet SDK covers the basics used in a typical wallet flow.
@@ -171,6 +172,11 @@ You can read more about working with Anchors in the [respective doc section](htt
 
 You can read more about working with Recovery Servers in the [respective doc section](https://github.com/Soneso/stellar_wallet_flutter_sdk/blob/main/doc/recovery.md).
 
+## Quotes
+
+[SEP-038](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0038.md) defines a way for anchors to provide quotes for the exchange of an off-chain asset and a different on-chain asset, and vice versa.
+
+You can read more about requesting quotes in the [respective doc section](https://github.com/Soneso/stellar_wallet_flutter_sdk/blob/main/doc/quotes.md).
 
 ## Docs and Examples
 
