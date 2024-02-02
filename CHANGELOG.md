@@ -1,3 +1,6 @@
+## [0.2.0] - 02.Feb.2024.
+- add quotes service (sep-38)
+
 ## [0.1.0] - 17.Jan.2024.
 - add stellar functionality for typical wallet flows
 - extend examples

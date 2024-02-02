@@ -8,10 +8,12 @@ import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
 import 'package:stellar_wallet_flutter_sdk/src/anchor/sep_24.dart';
 import 'package:stellar_wallet_flutter_sdk/src/auth/sep_10.dart';
 import 'package:stellar_wallet_flutter_sdk/src/customer/sep_12.dart';
+import 'package:stellar_wallet_flutter_sdk/src/quote/sep_38.dart';
 import 'package:stellar_wallet_flutter_sdk/src/exceptions/exceptions.dart';
 import 'package:stellar_wallet_flutter_sdk/src/toml/stellar_toml.dart';
 import 'package:stellar_wallet_flutter_sdk/src/wallet.dart';
 import 'package:http/http.dart' as http;
+
 
 /// Build on/off ramps with anchors.
 class Anchor {
@@ -66,6 +68,18 @@ class Anchor {
   Sep24 sep24() {
     return Sep24(this, httpClient: httpClient);
   }
+
+  /// Creates a quote service as described in SEP-38.
+  /// Returns [Sep38] object.
+  /// Throws [AnchorQuoteServerNotFoundException] if SEP-38 is not configured.
+  Future<Sep38> sep38({AuthToken? authToken}) async {
+    TomlInfo toml = await infoHolder.info;
+    if (toml.anchorQuoteServer == null) {
+      throw AnchorQuoteServerNotFoundException();
+    }
+    return Sep38(toml.anchorQuoteServer!, token: authToken, httpClient: httpClient);
+  }
+
 }
 
 class InfoHolder {

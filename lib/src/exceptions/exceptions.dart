@@ -342,6 +342,38 @@ class RecoveryServerResponseError implements RecoveryException {
   String message;
 }
 
+// Quotes exceptions
+
+class QuoteException implements WalletException {
+  @override
+  Exception? cause;
+
+  @override
+  String message;
+
+  QuoteException(this.message) : super();
+}
+
+class QuoteEndpointAuthRequired implements QuoteException {
+  QuoteEndpointAuthRequired(this.message, {this.cause}) : super();
+
+  @override
+  Exception? cause;
+
+  @override
+  String message;
+}
+
+class QuoteRequestPermissionDenied implements QuoteException {
+  QuoteRequestPermissionDenied(this.message, {this.cause}) : super();
+
+  @override
+  Exception? cause;
+
+  @override
+  String message;
+}
+
 // customer exceptions
 
 class CustomerException implements WalletException {
@@ -420,6 +452,18 @@ class KYCServerNotFoundException implements CustomerException {
   }
 }
 
+class AnchorQuoteServerNotFoundException implements CustomerException {
+  @override
+  Exception? cause;
+
+  @override
+  late String message;
+
+  AnchorQuoteServerNotFoundException() : super() {
+    message = "Required Anchor Quote Server URL not found";
+  }
+}
+
 // anchor exceptions
 
 class AnchorException implements WalletException {
@@ -450,6 +494,16 @@ class AnchorTransactionNotFoundException implements AnchorException {
   String message;
 
   AnchorTransactionNotFoundException(this.message, this.cause) : super();
+}
+
+class BadRequestDataException implements AnchorException {
+  @override
+  Exception? cause;
+
+  @override
+  String message;
+
+  BadRequestDataException(this.message, {this.cause}) : super();
 }
 
 class AnchorAuthException implements AnchorException {
