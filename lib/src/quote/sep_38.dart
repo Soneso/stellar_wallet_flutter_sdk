@@ -7,17 +7,24 @@ import 'package:http/http.dart' as http;
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
 import 'package:stellar_wallet_flutter_sdk/src/exceptions/exceptions.dart';
 
+/// Implements SEP-0038 - Anchor RFQ API.
+/// See <https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0038.md" target="_blank">Anchor RFQ API.</a>
 class Sep38 {
   AuthToken? token;
   String serviceAddress;
   http.Client? httpClient;
   late flutter_sdk.SEP38QuoteService quoteService;
 
+  /// Constructor accepting the [serviceAddress] from the server (ANCHOR_QUOTE_SERVER in stellar.toml).
+  /// It also accepts an optional [httpClient] to be used for requests. If not provided, this service will use its own http client.
+  /// The SEP-10 auth [token] is optional, but required for [requestQuote] and [getQuote] methods (endpoints).
   Sep38(this.serviceAddress, {this.httpClient, this.token}) {
     quoteService =
         flutter_sdk.SEP38QuoteService(serviceAddress, httpClient: httpClient);
   }
 
+  /// This endpoint returns the supported Stellar assets and off-chain assets available for trading.
+  /// See: https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0038.md#get-info
   Future<QuotesInfoResponse> info() async {
     try {
       flutter_sdk.SEP38InfoResponse infoResponse =
@@ -31,6 +38,13 @@ class Sep38 {
     }
   }
 
+  /// This endpoint can be used to fetch the indicative prices of available off-chain assets in exchange for a Stellar asset and vice versa.
+  /// It accepts following parameters:
+  /// [sellAsset] The asset you want to sell, using the Asset Identification Format.
+  /// [sellAmount] The amount of sell_asset the client would exchange for each of the buy_assets.
+  /// [sellDeliveryMethod] Optional, one of the name values specified by the sell_delivery_methods array for the associated asset returned from GET /info. Can be provided if the user is delivering an off-chain asset to the anchor but is not strictly required.
+  /// [buyDeliveryMethod] Optional, one of the name values specified by the buy_delivery_methods array for the associated asset returned from GET /info. Can be provided if the user intends to receive an off-chain asset from the anchor but is not strictly required.
+  /// [countryCode] Optional, The ISO 3166-2 or ISO-3166-1 alpha-2 code of the user's current address. Should be provided if there are two or more country codes available for the desired asset in GET /info.
   Future<QuoteAssetIndicativePrices> prices(
       {required String sellAsset,
       required String sellAmount,
@@ -56,6 +70,18 @@ class Sep38 {
     }
   }
 
+  /// This endpoint can be used to fetch the indicative price for a given asset pair.
+  /// See: https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0038.md#get-price
+  /// The client must provide either [sellAmount] or [buyAmount], but not both.
+  /// Parameters:
+  /// [context] The context for what this quote will be used for. Must be one of 'sep6' or 'sep31'.
+  /// [sellAsset] The asset the client would like to sell. Ex. stellar:USDC:G..., iso4217:ARS
+  /// [buyAsset] The asset the client would like to exchange for [sellAsset].
+  /// [sellAmount] optional, the amount of [sellAsset] the client would like to exchange for [buyAsset].
+  /// [buyAmount] optional, the amount of [buyAsset] the client would like to exchange for [sellAsset].
+  /// [sellDeliveryMethod] optional, one of the name values specified by the sell_delivery_methods array for the associated asset returned from GET /info. Can be provided if the user is delivering an off-chain asset to the anchor but is not strictly required.
+  /// [buyDeliveryMethod] optional, one of the name values specified by the buy_delivery_methods array for the associated asset returned from GET /info. Can be provided if the user intends to receive an off-chain asset from the anchor but is not strictly required.
+  /// [countryCode] Optional, The ISO 3166-2 or ISO-3166-1 alpha-2 code of the user's current address. Should be provided if there are two or more country codes available for the desired asset in GET /info.
   Future<QuoteAssetPairIndicativePrice> price(
       {required String context,
       required String sellAsset,
@@ -93,6 +119,8 @@ class Sep38 {
     }
   }
 
+  /// This endpoint can be used to request a firm quote for a Stellar asset and off-chain asset pair.
+  /// Needs [authToken] token obtained before with SEP-0010. If not given by constructor, it can be passed here.
   Future<FirmQuote> requestQuote(
       {required String context,
       required String sellAsset,
@@ -144,6 +172,8 @@ class Sep38 {
     }
   }
 
+  /// This endpoint can be used to fetch a previously-provided firm quote by [id].
+  /// Needs [authToken] token obtained before with SEP-0010. If not given by constructor, it can be passed here.
   Future<FirmQuote> getQuote(String quoteId, {AuthToken? authToken}) async {
     try {
       AuthToken? sep10Token = authToken;
