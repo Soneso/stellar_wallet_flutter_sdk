@@ -5,18 +5,20 @@
 import 'dart:async';
 
 import 'package:stellar_wallet_flutter_sdk/src/anchor/anchor.dart';
-import 'package:stellar_wallet_flutter_sdk/src/anchor/sep_24.dart';
 import 'package:stellar_wallet_flutter_sdk/src/asset/asset_id.dart';
 import 'package:stellar_wallet_flutter_sdk/src/auth/sep_10.dart';
 import 'package:logger/logger.dart';
+
+enum WatcherKind { sep6, sep24 }
 
 class Watcher {
   Anchor anchor;
   Duration pollDelay;
   WalletExceptionHandler exceptionHandler;
+  WatcherKind watcherKind;
   var logger = Logger();
 
-  Watcher(this.anchor, this.pollDelay, this.exceptionHandler);
+  Watcher(this.anchor, this.pollDelay, this.exceptionHandler, this.watcherKind);
 
   WatcherResult watchOneTransaction(AuthToken authToken, String id,
       {String? lang}) {
@@ -31,9 +33,13 @@ class Watcher {
       pollDelay,
       (timer) async {
         try {
-          AnchorTransaction transaction = await anchor
-              .sep24()
-              .getTransactionBy(authToken, id: id, lang: lang);
+          AnchorTransaction transaction = watcherKind == WatcherKind.sep6
+              ? await anchor
+                  .sep6()
+                  .getTransactionBy(authToken: authToken, id: id, lang: lang)
+              : await anchor
+                  .sep24()
+                  .getTransactionBy(authToken, id: id, lang: lang);
           if (controller.isClosed) {
             timer.cancel();
             return;
@@ -85,9 +91,14 @@ class Watcher {
       (timer) async {
         // Update user about remaining time
         try {
-          List<AnchorTransaction> txList = await anchor
-              .sep24()
-              .getTransactionsForAsset(asset, authToken,
+          List<AnchorTransaction> txList = watcherKind == WatcherKind.sep6
+              ? await anchor.sep6().getTransactionsForAsset(
+                  authToken: authToken,
+                  assetCode: asset is IssuedAssetId ? asset.code : asset.id,
+                  noOlderThan: since,
+                  kind: kind,
+                  lang: lang)
+              : await anchor.sep24().getTransactionsForAsset(asset, authToken,
                   noOlderThan: since, kind: kind, lang: lang);
 
           if (controller.isClosed) {
@@ -132,7 +143,8 @@ class Watcher {
           }
         } catch (e, stackTrace) {
           shouldExit = true;
-          logger.d("CRITICAL: Unknown error occurred: $e stack trace: $stackTrace");
+          logger.d(
+              "CRITICAL: Unknown error occurred: $e stack trace: $stackTrace");
         }
         if (shouldExit) {
           timer.cancel();

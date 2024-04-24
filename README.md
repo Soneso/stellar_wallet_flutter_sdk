@@ -13,7 +13,7 @@ utilizes [Flutter Stellar SDK](https://github.com/Soneso/stellar_flutter_sdk) to
 1. Add the dependency to your pubspec.yaml file:
 ```
 dependencies:
-  stellar_wallet_flutter_sdk: ^0.2.0
+  stellar_wallet_flutter_sdk: ^0.3.0
 ```
 2. Install it (command line or IDE):
 ```
@@ -60,6 +60,7 @@ AnchorServiceInfo serviceInfo = await anchor.sep24().getServiceInfo();
 The Wallet SDK provides an easy way to communicate with Anchors. It supports:
 
 - [SEP-001](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0001.md)
+- [SEP-006](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0006.md)
 - [SEP-009](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0009.md)
 - [SEP-010](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0010.md)
 - [SEP-012](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0012.md)
@@ -177,6 +178,14 @@ You can read more about working with Recovery Servers in the [respective doc sec
 [SEP-038](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0038.md) defines a way for anchors to provide quotes for the exchange of an off-chain asset and a different on-chain asset, and vice versa.
 
 You can read more about requesting quotes in the [respective doc section](https://github.com/Soneso/stellar_wallet_flutter_sdk/blob/main/doc/quotes.md).
+
+## Programmatic Deposit and Withdrawal
+
+The [SEP-06](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0006.md) standard defines a way for anchors and wallets to interact on behalf of users.
+Wallets use this standard to facilitate exchanges between on-chain assets (such as stablecoins) and off-chain assets (such as fiat, or other network assets such as BTC).
+
+You can read more about programmatic deposit and withdrawal in the [respective doc section](https://github.com/Soneso/stellar_wallet_flutter_sdk/blob/main/doc/transfer.md).
+
 
 ## Docs and Examples
 

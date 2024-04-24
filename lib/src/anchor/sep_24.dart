@@ -19,7 +19,6 @@ class Sep24 {
   Anchor anchor;
   http.Client? httpClient;
 
-
   Sep24(this.anchor, {this.httpClient});
 
   /// Initiates interactive withdrawal using
@@ -113,6 +112,11 @@ class Sep24 {
     request.customFiles = extraFiles;
     request.account = destinationAccount;
 
+    request.memo = destinationMemo;
+    if (destinationMemoType != null) {
+      request.memoType = destinationMemoType.value;
+    }
+
     AnchorServiceInfo serviceInfo = await getServiceInfo();
     AnchorServiceAsset? asset = serviceInfo.getDepositServiceAssetFor(assetId);
 
@@ -144,16 +148,16 @@ class Sep24 {
   Watcher watcher(
       {Duration pollDelay = const Duration(seconds: 5),
       WalletExceptionHandler? exceptionHandler}) {
-    return Watcher(
-        anchor, pollDelay, exceptionHandler ?? RetryExceptionHandler());
+    return Watcher(anchor, pollDelay,
+        exceptionHandler ?? RetryExceptionHandler(), WatcherKind.sep24);
   }
 
   /// Get single transaction's current status and details.
   /// Pass the [transactionId] and the [authToken] of the account authenticated with the anchor.
-  /// Returns an [AnchorTransaction] object and throws [AnchorInteractiveFlowNotSupported]
+  /// Returns an [Sep24Transaction] object and throws [AnchorInteractiveFlowNotSupported]
   /// if SEP-24 interactive flow is not configured or [AnchorAuthNotSupported]
   /// if auth is not supported by the anchor. [AnchorTransactionNotFoundException] if any other error occurs.
-  Future<AnchorTransaction> getTransaction(
+  Future<Sep24Transaction> getTransaction(
       String transactionId, AuthToken authToken) async {
     flutter_sdk.SEP24TransactionRequest request =
         flutter_sdk.SEP24TransactionRequest();
@@ -173,9 +177,9 @@ class Sep24 {
             httpClient: httpClient);
     try {
       flutter_sdk.SEP24TransactionResponse response =
-      await service.transaction(request);
-      return AnchorTransaction.fromTx(response.transaction);
-    } on Exception catch(e) {
+          await service.transaction(request);
+      return Sep24Transaction.fromTx(response.transaction);
+    } on Exception catch (e) {
       throw AnchorTransactionNotFoundException("Transaction not found", e);
     }
   }
@@ -183,10 +187,10 @@ class Sep24 {
   /// Get single transaction's current status and details. One of the [id], [stellarTransactionId],
   /// [externalTransactionId] must be provided, otherwise it throws a [ValidationException].
   /// [authToken] of the account authenticated with the anchor is also mandatory.
-  /// Returns an [AnchorTransaction] object and throws [AnchorInteractiveFlowNotSupported]
+  /// Returns an [Sep24Transaction] object and throws [AnchorInteractiveFlowNotSupported]
   /// if SEP-24 interactive flow is not configured or [AnchorAuthNotSupported] if
   /// auth is not supported by the anchor. [AnchorTransactionNotFoundException] if any other error occurs.
-  Future<AnchorTransaction> getTransactionBy(AuthToken authToken,
+  Future<Sep24Transaction> getTransactionBy(AuthToken authToken,
       {String? id,
       String? stellarTransactionId,
       String? externalTransactionId,
@@ -220,9 +224,9 @@ class Sep24 {
 
     try {
       flutter_sdk.SEP24TransactionResponse response =
-      await service.transaction(request);
-      return AnchorTransaction.fromTx(response.transaction);
-    } on Exception catch(e) {
+          await service.transaction(request);
+      return Sep24Transaction.fromTx(response.transaction);
+    } on Exception catch (e) {
       throw AnchorTransactionNotFoundException("Transaction not found", e);
     }
   }
@@ -233,10 +237,10 @@ class Sep24 {
   /// time. The response should contain at most [limit] transactions. The [kind] of transaction that is desired.
   /// [pagingId] - The response should contain transactions starting prior to this ID (exclusive).
   /// [lang] - Language to use - [RFC 4646](https://www.rfc-editor.org/rfc/rfc4646), default is `en`
-  /// Returns a list of [AnchorTransaction] objects and throws [AnchorInteractiveFlowNotSupported]
+  /// Returns a list of [Sep24Transaction] objects and throws [AnchorInteractiveFlowNotSupported]
   /// if SEP-24 interactive flow is not configured or [AnchorAuthNotSupported] if
   /// auth is not supported by the anchor.
-  Future<List<AnchorTransaction>> getTransactionsForAsset(
+  Future<List<Sep24Transaction>> getTransactionsForAsset(
       AssetId asset, AuthToken authToken,
       {DateTime? noOlderThan,
       int? limit,
@@ -266,6 +270,8 @@ class Sep24 {
           request.kind = "deposit";
         case TransactionKind.withdrawal:
           request.kind = "withdrawal";
+        default:
+          request.kind = null;
       }
     }
     request.pagingId = pagingId;
@@ -277,10 +283,10 @@ class Sep24 {
             httpClient: httpClient);
     flutter_sdk.SEP24TransactionsResponse response =
         await service.transactions(request);
-    List<AnchorTransaction> result =
-        List<AnchorTransaction>.empty(growable: true);
+    List<Sep24Transaction> result =
+        List<Sep24Transaction>.empty(growable: true);
     for (flutter_sdk.SEP24Transaction tx in response.transactions) {
-      result.add(AnchorTransaction.fromTx(tx));
+      result.add(Sep24Transaction.fromTx(tx));
     }
     return result;
   }
@@ -292,11 +298,11 @@ class Sep24 {
   /// time. The response should contain at most [limit] transactions.
   /// [pagingId] - The response should contain transactions starting prior to this ID (exclusive).
   /// [lang] - Language to use - [RFC 4646](https://www.rfc-editor.org/rfc/rfc4646), default is `en`
-  /// Returns a list of [AnchorTransaction] objects and throws [AnchorInteractiveFlowNotSupported]
+  /// Returns a list of [Sep24Transaction] objects and throws [AnchorInteractiveFlowNotSupported]
   /// if SEP-24 interactive flow is not configured or [AnchorAuthNotSupported] if
   /// auth is not supported by the anchor. Also throws [AssetNotSupportedException]
   /// if the given [asset] is not supported by the anchor.
-  Future<List<AnchorTransaction>> getHistory(AssetId asset, AuthToken authToken,
+  Future<List<Sep24Transaction>> getHistory(AssetId asset, AuthToken authToken,
       {DateTime? noOlderThan,
       int? limit,
       String? pagingId,
@@ -339,10 +345,10 @@ class Sep24 {
             httpClient: httpClient);
     flutter_sdk.SEP24TransactionsResponse response =
         await service.transactions(request);
-    List<AnchorTransaction> result =
-        List<AnchorTransaction>.empty(growable: true);
+    List<Sep24Transaction> result =
+        List<Sep24Transaction>.empty(growable: true);
     for (flutter_sdk.SEP24Transaction tx in response.transactions) {
-      result.add(AnchorTransaction.fromTx(tx));
+      result.add(Sep24Transaction.fromTx(tx));
     }
     return result;
   }
@@ -359,17 +365,6 @@ class InteractiveFlowResponse {
       flutter_sdk.SEP24InteractiveResponse response) {
     return InteractiveFlowResponse(response.id, response.url, response.type);
   }
-}
-
-class AnchorTransactionStatusResponse {
-  AnchorTransaction transaction;
-  AnchorTransactionStatusResponse(this.transaction);
-}
-
-class AnchorAllTransactionsResponse {
-  List<AnchorTransaction> transactions;
-
-  AnchorAllTransactionsResponse(this.transactions);
 }
 
 class AnchorServiceAsset {
@@ -508,17 +503,20 @@ class Refunds {
   }
 }
 
-abstract class AnchorTransaction {
-  String id;
-  TransactionStatus status;
-  String moreInfoUrl;
+abstract class Sep24Transaction extends AnchorTransaction {
+  /// Start date and time of transaction.
   DateTime startedAt;
-  String? message;
 
-  AnchorTransaction(this.id, this.status, this.moreInfoUrl, this.startedAt,
-      {this.message});
+  /// A URL that is opened by wallets after the interactive flow is complete.
+  /// It can include banking information for users to start deposits,
+  /// the status of the transaction, or any other information the user
+  /// might need to know about the transaction.
+  String moreInfoUrl;
 
-  static AnchorTransaction fromTx(flutter_sdk.SEP24Transaction tx) {
+  Sep24Transaction(super.id, super.status, this.startedAt, this.moreInfoUrl,
+      {super.message});
+
+  static Sep24Transaction fromTx(flutter_sdk.SEP24Transaction tx) {
     TransactionStatus status = TransactionStatus(tx.status);
     String kind = tx.kind;
 
@@ -544,7 +542,7 @@ abstract class AnchorTransaction {
   }
 }
 
-abstract class ProcessingAnchorTransaction extends AnchorTransaction {
+abstract class ProcessingAnchorTransaction extends Sep24Transaction {
   int? statusEta;
   bool? kycVerified;
   String? amountInAsset;
@@ -559,8 +557,8 @@ abstract class ProcessingAnchorTransaction extends AnchorTransaction {
   String? externalTransactionId;
   Refunds? refunds;
 
-  ProcessingAnchorTransaction(super.id, super.status, super.moreInfoUrl,
-      super.startedAt, this.amountIn, this.amountOut, this.amountFee,
+  ProcessingAnchorTransaction(super.id, super.status, super.startedAt,
+      this.amountIn, this.amountOut, this.amountFee, super.moreInfoUrl,
       {super.message});
 
   void fillOptionalFieldsFrom(flutter_sdk.SEP24Transaction tx) {
@@ -583,9 +581,9 @@ abstract class ProcessingAnchorTransaction extends AnchorTransaction {
   }
 }
 
-abstract class IncompleteAnchorTransaction extends AnchorTransaction {
+abstract class IncompleteAnchorTransaction extends Sep24Transaction {
   IncompleteAnchorTransaction(
-      super.id, super.status, super.moreInfoUrl, super.startedAt,
+      super.id, super.status, super.startedAt, super.moreInfoUrl,
       {super.message});
 }
 
@@ -596,19 +594,19 @@ class DepositTransaction extends ProcessingAnchorTransaction {
   String? depositMemoType;
   String? claimableBalanceId;
 
-  DepositTransaction(super.id, super.status, super.moreInfoUrl, super.startedAt,
-      super.amountIn, super.amountOut, super.amountFee,
+  DepositTransaction(super.id, super.status, super.startedAt, super.amountIn,
+      super.amountOut, super.amountFee, super.moreInfoUrl,
       {super.message});
 
   static DepositTransaction fromTx(flutter_sdk.SEP24Transaction tx) {
     DepositTransaction result = DepositTransaction(
         tx.id,
         TransactionStatus(tx.status),
-        tx.moreInfoUrl,
         DateTime.parse(tx.startedAt),
         tx.amountIn,
         tx.amountOut,
         tx.amountFee,
+        tx.moreInfoUrl,
         message: tx.message);
     result.fillOptionalFieldsFrom(tx);
     return result;
@@ -640,11 +638,11 @@ class WithdrawalTransaction extends ProcessingAnchorTransaction {
     WithdrawalTransaction result = WithdrawalTransaction(
         tx.id,
         TransactionStatus(tx.status),
-        tx.moreInfoUrl,
         DateTime.parse(tx.startedAt),
         tx.amountIn,
         tx.amountOut,
         tx.amountFee,
+        tx.moreInfoUrl,
         message: tx.message);
     result.fillOptionalFieldsFrom(tx);
     return result;
@@ -672,8 +670,8 @@ class IncompleteWithdrawalTransaction extends IncompleteAnchorTransaction {
     IncompleteWithdrawalTransaction result = IncompleteWithdrawalTransaction(
         tx.id,
         TransactionStatus(tx.status),
-        tx.moreInfoUrl,
         DateTime.parse(tx.startedAt),
+        tx.moreInfoUrl,
         message: tx.message);
     result.message = tx.message;
     result.from = tx.from;
@@ -691,8 +689,8 @@ class IncompleteDepositTransaction extends IncompleteAnchorTransaction {
     IncompleteDepositTransaction result = IncompleteDepositTransaction(
         tx.id,
         TransactionStatus(tx.status),
-        tx.moreInfoUrl,
         DateTime.parse(tx.startedAt),
+        tx.moreInfoUrl,
         message: tx.message);
     result.message = tx.message;
     result.to = tx.to;
@@ -700,7 +698,7 @@ class IncompleteDepositTransaction extends IncompleteAnchorTransaction {
   }
 }
 
-class ErrorTransaction extends AnchorTransaction {
+class ErrorTransaction extends Sep24Transaction {
   TransactionKind kind;
 
   // Fields from withdrawal/deposit transactions that may present in error transaction
@@ -738,8 +736,8 @@ class ErrorTransaction extends AnchorTransaction {
         kind,
         tx.id,
         TransactionStatus(tx.status),
-        tx.moreInfoUrl,
         DateTime.parse(tx.startedAt),
+        tx.moreInfoUrl,
         message: tx.message);
     result.statusEta = tx.statusEta;
     result.kycVerified = tx.kycVerified;
@@ -768,170 +766,4 @@ class ErrorTransaction extends AnchorTransaction {
     result.withdrawalMemoType = tx.withdrawMemoType;
     return result;
   }
-}
-
-class TransactionStatus {
-  final String _value;
-  const TransactionStatus._internal(this._value);
-  @override
-  toString() => 'TransactionStatus.$_value';
-  TransactionStatus(this._value);
-  get value => _value;
-
-  /// There is not yet enough information for this transaction to be initiated. Perhaps the user has
-  /// not yet entered necessary info in an interactive flow
-  static const incomplete = TransactionStatus._internal("incomplete");
-
-  /// The user has not yet initiated their transfer to the anchor. This is the next necessary step in
-  /// any deposit or withdrawal flow after transitioning from `incomplete`
-  static const pendingUserTransferStart =
-      TransactionStatus._internal("pending_user_transfer_start");
-
-  /// The Stellar payment has been successfully received by the anchor and the off-chain funds are
-  /// available for the customer to pick up. Only used for withdrawal transactions.
-  static const pendingUserTransferComplete =
-      TransactionStatus._internal("pending_user_transfer_complete");
-
-  /// Pending External deposit/withdrawal has been submitted to external network, but is not yet
-  /// confirmed. This is the status when waiting on Bitcoin or other external crypto network to
-  /// complete a transaction, or when waiting on a bank transfer.
-  static const pendingExternal =
-      TransactionStatus._internal("pending_external");
-
-  /// Deposit/withdrawal is being processed internally by anchor. This can also be used when the
-  /// anchor must verify KYC information prior to deposit/withdrawal.
-  static const pendingAnchor = TransactionStatus._internal("pending_anchor");
-
-  /// Deposit/withdrawal operation has been submitted to Stellar network, but is not yet confirmed.
-  static const pendingStellar = TransactionStatus._internal("pending_stellar");
-
-  /// The user must add a trustline for the asset for the deposit to complete.
-  static const pendingTrust = TransactionStatus._internal("pending_trust");
-
-  /// The user must take additional action before the deposit / withdrawal can complete, for example
-  /// an email or 2fa confirmation of a withdrawal.
-  static const pendingUser = TransactionStatus._internal("pending_user");
-
-  /// Deposit/withdrawal fully completed
-  static const completed = TransactionStatus._internal("completed");
-
-  /// The deposit/withdrawal is fully refunded
-  static const refunded = TransactionStatus._internal("refunded");
-
-  /// Funds were never received by the anchor and the transaction is considered abandoned by the
-  /// user. Anchors are responsible for determining when transactions are considered expired.
-  static const expired = TransactionStatus._internal("expired");
-
-  /// Could not complete deposit because no satisfactory asset/XLM market was available
-  /// to create the account
-  static const noMarket = TransactionStatus._internal("no_market");
-
-  /// Deposit/withdrawal size less than min_amount.
-  static const tooSmall = TransactionStatus._internal("too_small");
-
-  /// Deposit/withdrawal size exceeded max_amount.
-  static const tooLarge = TransactionStatus._internal("too_large");
-
-  /// Catch-all for any error not enumerated above.
-  static const error = TransactionStatus._internal("error");
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) {
-      return true;
-    }
-
-    return (other is TransactionStatus && other.value == value);
-  }
-
-  @override
-  int get hashCode => Object.hash(value, value);
-
-  bool isError() {
-    return (this == TransactionStatus.error ||
-        this == TransactionStatus.noMarket ||
-        this == TransactionStatus.tooLarge ||
-        this == TransactionStatus.tooSmall);
-  }
-
-  bool isTerminal() {
-    return (this == TransactionStatus.completed ||
-        this == TransactionStatus.refunded ||
-        this == TransactionStatus.expired ||
-        isError());
-  }
-
-  static TransactionStatus? fromString(String? statusString) {
-    if (incomplete.value == statusString) {
-      return incomplete;
-    }
-    if (pendingUserTransferStart.value == statusString) {
-      return pendingUserTransferStart;
-    }
-    if (pendingUserTransferComplete.value == statusString) {
-      return pendingUserTransferComplete;
-    }
-    if (pendingExternal.value == statusString) {
-      return pendingExternal;
-    }
-    if (pendingAnchor.value == statusString) {
-      return pendingAnchor;
-    }
-    if (pendingStellar.value == statusString) {
-      return pendingStellar;
-    }
-    if (pendingTrust.value == statusString) {
-      return pendingTrust;
-    }
-    if (pendingUser.value == statusString) {
-      return pendingUser;
-    }
-    if (completed.value == statusString) {
-      return completed;
-    }
-    if (refunded.value == statusString) {
-      return refunded;
-    }
-    if (expired.value == statusString) {
-      return expired;
-    }
-    if (tooSmall.value == statusString) {
-      return tooSmall;
-    }
-    if (tooLarge.value == statusString) {
-      return tooLarge;
-    }
-    if (error.value == statusString) {
-      return error;
-    }
-
-    return null;
-  }
-}
-
-enum TransactionKind { deposit, withdrawal }
-
-class MemoType {
-  final String _value;
-  const MemoType._internal(this._value);
-  @override
-  toString() => 'MemoType.$_value';
-  MemoType(this._value);
-  get value => _value;
-
-  static const text = MemoType._internal("text");
-  static const hash = MemoType._internal("hash");
-  static const id = MemoType._internal("id");
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) {
-      return true;
-    }
-
-    return (other is MemoType && other.value == value);
-  }
-
-  @override
-  int get hashCode => Object.hash(value, value);
 }

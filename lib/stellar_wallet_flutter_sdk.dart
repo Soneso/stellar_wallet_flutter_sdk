@@ -19,3 +19,4 @@ export 'src/anchor/sep_24.dart';
 export 'src/anchor/watcher.dart';
 export 'src/recovery/sep_30.dart';
 export 'src/quote/sep_38.dart';
+export 'src/anchor/sep_6.dart';

@@ -79,4 +79,5 @@ class AuthToken {
   String? get clientDomain => decodedToken.containsKey("client_domain")
       ? decodedToken["client_domain"]
       : null;
+  String get account => principalAccount.split(":").first;
 }

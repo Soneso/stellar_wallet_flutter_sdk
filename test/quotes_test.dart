@@ -63,6 +63,7 @@ void main() {
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJHQTZVSVhYUEVXWUZJTE5VSVdBQzM3WTRRUEVaTVFWREpIREtWV0ZaSjJLQ1dVQklVNUlYWk5EQSIsImp0aSI6IjE0NGQzNjdiY2IwZTcyY2FiZmRiZGU2MGVhZTBhZDczM2NjNjVkMmE2NTg3MDgzZGFiM2Q2MTZmODg1MTkwMjQiLCJpc3MiOiJodHRwczovL2ZsYXBweS1iaXJkLWRhcHAuZmlyZWJhc2VhcHAuY29tLyIsImlhdCI6MTUzNDI1Nzk5NCwiZXhwIjoxNTM0MzQ0Mzk0fQ.8nbB83Z6vGBgC1X9r3N6oQCFTBzDiITAfCJasRft0z0";
 
   test('test get anchor information', () async {
+
     http.Client anchorMock = MockClient((request) async {
       if (request.url.toString().contains(anchorDomain) &&
           request.url.toString().contains("stellar.toml")) {
@@ -122,6 +123,7 @@ void main() {
 
   test('test get prices', () async {
     http.Client anchorMock = MockClient((request) async {
+
       if (request.url.toString().contains(anchorDomain) &&
           request.url.toString().contains("stellar.toml")) {
         return http.Response(anchorToml, 200);
@@ -164,7 +166,9 @@ void main() {
   });
 
   test('test get price', () async {
+
     http.Client anchorMock = MockClient((request) async {
+
       if (request.url.toString().contains(anchorDomain) &&
           request.url.toString().contains("stellar.toml")) {
         return http.Response(anchorToml, 200);
@@ -182,11 +186,11 @@ void main() {
             request.url.queryParameters['buy_amount'] == '100') {
           return http.Response(getPrice2ResponseSuccess(), 200); // OK
         } else if (request.url.queryParameters['sell_asset'] ==
-                'stellar:USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN' &&
+            'stellar:USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN' &&
             request.url.queryParameters['sell_amount'] == '90') {
           return http.Response(getPrice3ResponseSuccess(), 200); // OK
         } else if (request.url.queryParameters['sell_asset'] ==
-                'stellar:USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN' &&
+            'stellar:USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN' &&
             request.url.queryParameters['buy_amount'] == '500') {
           return http.Response(getPrice4ResponseSuccess(), 200); // OK
         }
@@ -225,7 +229,7 @@ void main() {
 
     sellAsset = 'iso4217:BRL';
     buyAsset =
-        'stellar:USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
+    'stellar:USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
     var buyAmount = '100';
     sellDeliveryMethod = 'PIX';
     countryCode = 'BRA';
@@ -254,7 +258,7 @@ void main() {
     assert(feeDetails![0].amount == "8.40");
 
     sellAsset =
-        'stellar:USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
+    'stellar:USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
     buyAsset = 'iso4217:BRL';
     sellAmount = '90';
     var buyDeliveryMethod = 'PIX';
@@ -285,7 +289,7 @@ void main() {
     assert(feeDetails![0].amount == "55.5556");
 
     sellAsset =
-        'stellar:USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
+    'stellar:USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
     buyAsset = 'iso4217:BRL';
     buyAmount = '500';
     buyDeliveryMethod = 'PIX';
@@ -343,7 +347,7 @@ void main() {
           buyAsset: context,
           buyDeliveryMethod: buyDeliveryMethod,
           countryCode: countryCode);
-    } on ValidationException {
+    }  on ValidationException {
       ex = true;
     }
 
@@ -351,7 +355,9 @@ void main() {
   });
 
   test('test request quote', () async {
+
     http.Client anchorMock = MockClient((request) async {
+
       if (request.url.toString().contains(anchorDomain) &&
           request.url.toString().contains("stellar.toml")) {
         return http.Response(anchorToml, 200);
@@ -388,8 +394,7 @@ void main() {
     var countryCode = 'BRA';
     var context = 'sep31';
 
-    var response = await sep38.requestQuote(
-        context: context,
+    var response = await sep38.requestQuote(context: context,
         sellAsset: sellAsset,
         buyAsset: buyAsset,
         buyAmount: buyAmount,
@@ -418,8 +423,7 @@ void main() {
 
     var ex = false;
     try {
-      response = await sep38.requestQuote(
-          context: context,
+      response = await sep38.requestQuote(context: context,
           sellAsset: sellAsset,
           buyAsset: buyAsset,
           buyAmount: buyAmount,
@@ -434,8 +438,7 @@ void main() {
 
     ex = false;
     try {
-      response = await sep38.requestQuote(
-          context: context,
+      response = await sep38.requestQuote(context: context,
           sellAsset: sellAsset,
           buyAsset: buyAsset,
           expireAfter: expireAfter,
@@ -448,8 +451,7 @@ void main() {
 
     ex = false;
     try {
-      response = await sep38.requestQuote(
-          context: context,
+      response = await sep38.requestQuote(context: context,
           sellAsset: "iso4217:SAD",
           buyAsset: buyAsset,
           buyAmount: buyAmount,
@@ -464,21 +466,24 @@ void main() {
     ex = false;
     try {
       sep38 = await anchor.sep38();
-      response = await sep38.requestQuote(
-          context: context,
+      response = await sep38.requestQuote(context: context,
           sellAsset: sellAsset,
           buyAsset: buyAsset,
           expireAfter: expireAfter,
           sellDeliveryMethod: sellDeliveryMethod,
           countryCode: countryCode);
-    } on QuoteEndpointAuthRequired {
+
+    }  on QuoteEndpointAuthRequired {
       ex = true;
     }
     assert(ex);
   });
 
+
   test('test get quote', () async {
+
     http.Client anchorMock = MockClient((request) async {
+
       if (request.url.toString().contains(anchorDomain) &&
           request.url.toString().contains("stellar.toml")) {
         return http.Response(anchorToml, 200);
@@ -527,9 +532,10 @@ void main() {
     try {
       sep38 = await anchor.sep38();
       response = await sep38.getQuote('de762cda-a193-4961-861e-57b31fed6eb3');
-    } on QuoteEndpointAuthRequired {
+    }  on QuoteEndpointAuthRequired {
       ex = true;
     }
     assert(ex);
+
   });
 }

@@ -627,6 +627,19 @@ class AnchorInteractiveFlowNotSupported implements AnchorException {
   }
 }
 
+class AnchorDepositAndWithdrawalAPINotSupported implements AnchorException {
+  @override
+  Exception? cause;
+
+  @override
+  late String message;
+
+  AnchorDepositAndWithdrawalAPINotSupported() : super() {
+    message =
+        "Anchor does not have SEP-06 Deposit and Withdrawal API configured in TOML file";
+  }
+}
+
 class TomlNotFoundException implements AnchorException {
   @override
   Exception? cause;
