@@ -606,7 +606,7 @@ void main() {
     // check if we can find the path to send 10 IOM to E, since E does not trust IOM
     // expected IOM->ECO->MOON
     var paymentPaths =
-        await stellar.findStrictSendPath(iomAsset, "10", accountEId);
+        await stellar.findStrictSendPathForDestinationAddress(iomAsset, "10", accountEId);
     assert(paymentPaths.length == 1);
     var paymentPath = paymentPaths.first;
 
@@ -617,6 +617,21 @@ void main() {
     assert(double.parse(paymentPath.destinationAmount) == 40);
 
     var assetsPath = paymentPath.path;
+    assert(assetsPath.length == 1);
+    assert(assetsPath.first == ecoAsset);
+
+    paymentPaths =
+    await stellar.findStrictSendPathForDestinationAssets(iomAsset, "10", [moonAsset]);
+    assert(paymentPaths.length == 1);
+    paymentPath = paymentPaths.first;
+
+    assert(paymentPath.destinationAsset == moonAsset);
+    assert(paymentPath.sourceAsset == iomAsset);
+
+    assert(double.parse(paymentPath.sourceAmount) == 10);
+    assert(double.parse(paymentPath.destinationAmount) == 40);
+
+    assetsPath = paymentPath.path;
     assert(assetsPath.length == 1);
     assert(assetsPath.first == ecoAsset);
 

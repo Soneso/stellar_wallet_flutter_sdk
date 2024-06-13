@@ -165,9 +165,9 @@ class Stellar {
   }
 
   /// Fetches available paths on the Stellar network between the [destinationAddress], and the [sourceAssetId] sent by the source account
-  /// For the given [sourceAmount]. Array of payment paths that can be selected for the transaction.
+  /// considering the given [sourceAmount]. Returns an array of payment paths that can be selected for the transaction.
   /// Returns an empty list if no payment path could be found.
-  Future<List<PaymentPath>> findStrictSendPath(StellarAssetId sourceAssetId,
+  Future<List<PaymentPath>> findStrictSendPathForDestinationAddress(StellarAssetId sourceAssetId,
       String sourceAmount, String destinationAddress) async {
     final sdk = server;
     List<PaymentPath> result = List<PaymentPath>.empty(growable: true);
@@ -192,8 +192,45 @@ class Stellar {
     return result;
   }
 
+  /// Fetches available paths on the Stellar network between the [sourceAssetId] sent by the source account
+  /// and the given [destinationAssets] considering the [sourceAmount].
+  /// Returns an array of payment paths that can be selected for the transaction.
+  /// Returns an empty list if no payment path could be found.
+  Future<List<PaymentPath>> findStrictSendPathForDestinationAssets(StellarAssetId sourceAssetId,
+      String sourceAmount, List<StellarAssetId> destinationAssets) async {
+    final sdk = server;
+    List<PaymentPath> result = List<PaymentPath>.empty(growable: true);
+
+    try {
+      List<flutter_sdk.Asset> sdkDestinationAssets =
+      List<flutter_sdk.Asset>.empty(growable: true);
+      for (final asset in destinationAssets) {
+        sdkDestinationAssets.add(asset.toAsset());
+      }
+
+      flutter_sdk.Page<flutter_sdk.PathResponse> strictSendPaths = await sdk
+          .strictSendPaths
+          .sourceAsset(sourceAssetId.toAsset())
+          .sourceAmount(sourceAmount)
+          .destinationAssets(sdkDestinationAssets)
+          .execute();
+      if (strictSendPaths.records != null) {
+        final records = strictSendPaths.records!;
+        for (final record in records) {
+          result.add(PaymentPath.fromPathResponse(record));
+        }
+      }
+    } catch (exception) {
+      // request failed.
+    }
+
+    return result;
+  }
+
   /// Fetches available payment paths on the Stellar network between the given [sourceAssets],
-  /// the [destinationAssetId] and [destinationAmount] to be received by the destination.
+  /// the [destinationAssetId] considering the given [destinationAmount] to be received by the destination.
+  /// Returns an array of payment paths that can be selected for the transaction.
+  /// Returns an empty list if no payment path could be found.
   Future<List<PaymentPath>> findStrictReceivePathForSourceAssets(
       StellarAssetId destinationAssetId,
       String destinationAmount,
@@ -228,7 +265,9 @@ class Stellar {
   }
 
   /// Fetches available payment paths on the Stellar network between the assets hold by the [sourceAddress],
-  /// the [destinationAssetId] and [destinationAmount] to be received by the destination.
+  /// the [destinationAssetId] considering the given [destinationAmount] to be received by the destination.
+  /// Returns an array of payment paths that can be selected for the transaction.
+  /// Returns an empty list if no payment path could be found.
   Future<List<PaymentPath>> findStrictReceivePathForSourceAddress(
       StellarAssetId destinationAssetId,
       String destinationAmount,
