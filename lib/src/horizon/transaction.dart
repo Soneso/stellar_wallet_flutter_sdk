@@ -117,6 +117,58 @@ class TxBuilder extends CommonTxBuilder<TxBuilder> {
     return this;
   }
 
+  TxBuilder strictSend(
+      {required StellarAssetId sendAssetId,
+      required String sendAmount,
+      required String destinationAddress,
+      required StellarAssetId destinationAssetId,
+      required String destinationMinAmount,
+      List<StellarAssetId>? path}) {
+    var opBuilder = flutter_sdk.PathPaymentStrictSendOperationBuilder(
+            sendAssetId.toAsset(),
+            sendAmount,
+            destinationAddress,
+            destinationAssetId.toAsset(),
+            destinationMinAmount)
+        .setSourceAccount(sourceAccount.accountId);
+    if (path != null) {
+      List<flutter_sdk.Asset> assetPath =
+          List<flutter_sdk.Asset>.empty(growable: true);
+      for (var assetId in path) {
+        assetPath.add(assetId.toAsset());
+      }
+      opBuilder.setPath(assetPath);
+    }
+    sdkBuilder.addOperation(opBuilder.build());
+    return this;
+  }
+
+  TxBuilder strictReceive(
+      {required StellarAssetId sendAssetId,
+      required String sendMaxAmount,
+      required String destinationAddress,
+      required StellarAssetId destinationAssetId,
+      required String destinationAmount,
+      List<StellarAssetId>? path}) {
+    var opBuilder = flutter_sdk.PathPaymentStrictReceiveOperationBuilder(
+            sendAssetId.toAsset(),
+            sendMaxAmount,
+            destinationAddress,
+            destinationAssetId.toAsset(),
+            destinationAmount)
+        .setSourceAccount(sourceAccount.accountId);
+    if (path != null) {
+      List<flutter_sdk.Asset> assetPath =
+          List<flutter_sdk.Asset>.empty(growable: true);
+      for (var assetId in path) {
+        assetPath.add(assetId.toAsset());
+      }
+      opBuilder.setPath(assetPath);
+    }
+    sdkBuilder.addOperation(opBuilder.build());
+    return this;
+  }
+
   TxBuilder addOperation(flutter_sdk.Operation operation) {
     sdkBuilder.addOperation(operation);
     return this;
@@ -153,9 +205,7 @@ class TxBuilder extends CommonTxBuilder<TxBuilder> {
 class SponsoringBuilder extends CommonTxBuilder<SponsoringBuilder> {
   AccountKeyPair sponsorAccount;
 
-  SponsoringBuilder(
-      flutter_sdk.TransactionBuilderAccount sourceAccount, this.sponsorAccount)
-      : super(sourceAccount);
+  SponsoringBuilder(super.sourceAccount, this.sponsorAccount);
 
   SponsoringBuilder addManageDataOperation(
       flutter_sdk.ManageDataOperation operation) {

@@ -1,4 +1,4 @@
-@Timeout(const Duration(seconds: 400))
+@Timeout(Duration(seconds: 400))
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';

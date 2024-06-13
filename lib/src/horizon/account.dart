@@ -38,6 +38,10 @@ class SigningKeyPair extends AccountKeyPair {
 
   String get secretKey => keyPair.secretSeed;
 
+  static SigningKeyPair random() {
+    return SigningKeyPair(flutter_sdk.KeyPair.random());
+  }
+
   sign(flutter_sdk.AbstractTransaction transaction,
       flutter_sdk.Network network) {
     transaction.sign(keyPair, network);
@@ -59,7 +63,7 @@ class AccountService {
   /// Generate new account keypair (public and secret key). This key pair can be used to create a
   /// Stellar account.
   SigningKeyPair createKeyPair() {
-    return SigningKeyPair(flutter_sdk.KeyPair.random());
+    return SigningKeyPair.random();
   }
 
   Future <flutter_sdk.AccountResponse> getInfo(String accountAddress) async {
@@ -98,6 +102,22 @@ class AccountService {
       }
     }
   }
+
+  Future<bool> fundTestNetAccount(String address) async {
+    return await flutter_sdk.FriendBot.fundTestAccount(address);
+  }
+
+  /// checks if a given address (accountId) is valid or not.
+  /// if valid returns true, otherwise false.
+  static bool validateAddress(String address) {
+    try {
+      PublicKeyPair.fromAccountId(address);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
 }
 
 /// Account weights threshold

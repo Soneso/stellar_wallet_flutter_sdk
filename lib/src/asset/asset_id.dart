@@ -16,6 +16,13 @@ abstract class AssetId {
   AssetId(this.id, this.scheme);
 
   String get sep38 => "$scheme:$id";
+
+  @override
+  bool operator ==(Object other);
+
+  @override
+  int get hashCode;
+
 }
 
 abstract class StellarAssetId extends AssetId {
@@ -38,6 +45,13 @@ abstract class StellarAssetId extends AssetId {
       throw UnsupportedError("Unknown asset type");
     }
   }
+
+  @override
+  bool operator ==(Object other);
+
+  @override
+  int get hashCode;
+
 }
 
 class IssuedAssetId extends StellarAssetId {
@@ -51,10 +65,24 @@ class IssuedAssetId extends StellarAssetId {
   String toString() {
     return sep38;
   }
+
+  @override
+  bool operator==(Object other) =>
+      other is IssuedAssetId && code == other.code && issuer == other.issuer;
+
+  @override
+  int get hashCode => Object.hash(code, issuer);
 }
 
 class NativeAssetId extends StellarAssetId {
   NativeAssetId() : super("native");
+
+  @override
+  bool operator==(Object other) =>
+      other is NativeAssetId;
+
+  @override
+  int get hashCode => Object.hash(id, sep38);
 }
 
 class FiatAssetId extends AssetId {
@@ -64,4 +92,11 @@ class FiatAssetId extends AssetId {
   String toString() {
     return sep38;
   }
+
+  @override
+  bool operator==(Object other) =>
+      other is FiatAssetId && id == other.id;
+
+  @override
+  int get hashCode => Object.hash(id, sep38);
 }

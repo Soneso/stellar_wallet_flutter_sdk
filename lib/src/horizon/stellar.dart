@@ -5,7 +5,6 @@
 import 'dart:math';
 
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
-import 'package:stellar_wallet_flutter_sdk/src/horizon/transaction.dart';
 import 'package:stellar_wallet_flutter_sdk/stellar_wallet_flutter_sdk.dart';
 
 class Stellar {
@@ -163,5 +162,125 @@ class Stellar {
         .setBaseFee(txBaseFee)
         .setFeeAccount(feeAddress.address);
     return txBuilder.build();
+  }
+
+  /// Fetches available paths on the Stellar network between the [destinationAddress], and the [sourceAssetId] sent by the source account
+  /// For the given [sourceAmount]. Array of payment paths that can be selected for the transaction.
+  /// Returns an empty list if no payment path could be found.
+  Future<List<PaymentPath>> findStrictSendPath(StellarAssetId sourceAssetId,
+      String sourceAmount, String destinationAddress) async {
+    final sdk = server;
+    List<PaymentPath> result = List<PaymentPath>.empty(growable: true);
+
+    try {
+      flutter_sdk.Page<flutter_sdk.PathResponse> strictSendPaths = await sdk
+          .strictSendPaths
+          .sourceAsset(sourceAssetId.toAsset())
+          .sourceAmount(sourceAmount)
+          .destinationAccount(destinationAddress)
+          .execute();
+      if (strictSendPaths.records != null) {
+        final records = strictSendPaths.records!;
+        for (final record in records) {
+          result.add(PaymentPath.fromPathResponse(record));
+        }
+      }
+    } catch (exception) {
+      // request failed.
+    }
+
+    return result;
+  }
+
+  /// Fetches available payment paths on the Stellar network between the given [sourceAssets],
+  /// the [destinationAssetId] and [destinationAmount] to be received by the destination.
+  Future<List<PaymentPath>> findStrictReceivePathForSourceAssets(
+      StellarAssetId destinationAssetId,
+      String destinationAmount,
+      List<StellarAssetId> sourceAssets) async {
+    final sdk = server;
+    List<PaymentPath> result = List<PaymentPath>.empty(growable: true);
+
+    try {
+      List<flutter_sdk.Asset> sdkSourceAssets =
+          List<flutter_sdk.Asset>.empty(growable: true);
+      for (final asset in sourceAssets) {
+        sdkSourceAssets.add(asset.toAsset());
+      }
+
+      flutter_sdk.Page<flutter_sdk.PathResponse> strictSendPaths = await sdk
+          .strictReceivePaths
+          .destinationAsset(destinationAssetId.toAsset())
+          .destinationAmount(destinationAmount)
+          .sourceAssets(sdkSourceAssets)
+          .execute();
+      if (strictSendPaths.records != null) {
+        final records = strictSendPaths.records!;
+        for (final record in records) {
+          result.add(PaymentPath.fromPathResponse(record));
+        }
+      }
+    } catch (exception) {
+      // request failed.
+    }
+
+    return result;
+  }
+
+  /// Fetches available payment paths on the Stellar network between the assets hold by the [sourceAddress],
+  /// the [destinationAssetId] and [destinationAmount] to be received by the destination.
+  Future<List<PaymentPath>> findStrictReceivePathForSourceAddress(
+      StellarAssetId destinationAssetId,
+      String destinationAmount,
+      String sourceAddress) async {
+    final sdk = server;
+    List<PaymentPath> result = List<PaymentPath>.empty(growable: true);
+
+    try {
+      flutter_sdk.Page<flutter_sdk.PathResponse> strictSendPaths = await sdk
+          .strictReceivePaths
+          .destinationAsset(destinationAssetId.toAsset())
+          .destinationAmount(destinationAmount)
+          .sourceAccount(sourceAddress)
+          .execute();
+      if (strictSendPaths.records != null) {
+        final records = strictSendPaths.records!;
+        for (final record in records) {
+          result.add(PaymentPath.fromPathResponse(record));
+        }
+      }
+    } catch (exception) {
+      // request failed.
+    }
+
+    return result;
+  }
+}
+
+/// used as a result when fetching path payments.
+class PaymentPath {
+  String sourceAmount;
+  StellarAssetId sourceAsset;
+
+  String destinationAmount;
+  StellarAssetId destinationAsset;
+
+  List<StellarAssetId> path;
+
+  PaymentPath(this.sourceAmount, this.sourceAsset, this.destinationAmount,
+      this.destinationAsset, this.path);
+
+  static PaymentPath fromPathResponse(flutter_sdk.PathResponse response) {
+    final sourceAsset = StellarAssetId.fromAsset(response.sourceAsset);
+    final sourceAmount = response.sourceAmount;
+    final destinationAsset =
+        StellarAssetId.fromAsset(response.destinationAsset);
+    final destinationAmount = response.destinationAmount;
+    List<StellarAssetId> path = List<StellarAssetId>.empty(growable: true);
+    for (final asset in response.path) {
+      path.add(StellarAssetId.fromAsset(asset));
+    }
+    return PaymentPath(
+        sourceAmount, sourceAsset, destinationAmount, destinationAsset, path);
   }
 }

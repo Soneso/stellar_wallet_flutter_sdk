@@ -1,4 +1,4 @@
-@Timeout(const Duration(seconds: 400))
+@Timeout(Duration(seconds: 400))
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
@@ -484,5 +484,222 @@ void main() {
     /*for (var tx in transactions.records!) {
       print(tx.hash);
     }*/
+  });
+
+  test('test path payments', () async {
+    final keyPairA = account.createKeyPair();
+    await flutter_sdk.FriendBot.fundTestAccount(keyPairA.address);
+    final accountAId = keyPairA.address;
+
+    final keyPairB = account.createKeyPair();
+    final accountBId = keyPairB.address;
+
+    final keyPairC = account.createKeyPair();
+    final accountCId = keyPairC.address;
+
+    final keyPairD = account.createKeyPair();
+    final accountDId = keyPairD.address;
+
+    final keyPairE = account.createKeyPair();
+    final accountEId = keyPairE.address;
+
+    // fund the other accounts.
+
+    var txBuilder = await stellar.transaction(keyPairA);
+    var createAccountsTransaction = txBuilder
+        .createAccount(keyPairB, startingBalance: "10")
+        .createAccount(keyPairC, startingBalance: "10")
+        .createAccount(keyPairD, startingBalance: "10")
+        .createAccount(keyPairE, startingBalance: "10")
+        .build();
+    stellar.sign(createAccountsTransaction, keyPairA);
+
+    // submit transaction to the network
+    var success = await stellar.submitTransaction(createAccountsTransaction);
+    assert(success);
+
+    // create assets for testing
+    final iomAsset = IssuedAssetId(code: 'IOM', issuer: accountAId);
+    final ecoAsset = IssuedAssetId(code: 'ECO', issuer: accountAId);
+    final moonAsset = IssuedAssetId(code: 'MOON', issuer: accountAId);
+
+    // let c trust iom
+    txBuilder = await stellar.transaction(keyPairC);
+    var trustTransaction =
+        txBuilder.addAssetSupport(iomAsset, limit: "200999").build();
+    stellar.sign(trustTransaction, keyPairC);
+
+    success = await stellar.submitTransaction(trustTransaction);
+    assert(success);
+
+    // let b trust iom and eco
+    txBuilder = await stellar.transaction(keyPairB);
+    trustTransaction = txBuilder
+        .addAssetSupport(iomAsset, limit: "200999")
+        .addAssetSupport(ecoAsset, limit: "200999")
+        .build();
+    stellar.sign(trustTransaction, keyPairB);
+
+    success = await stellar.submitTransaction(trustTransaction);
+    assert(success);
+
+    // let d trust eco and moon
+    txBuilder = await stellar.transaction(keyPairD);
+    trustTransaction = txBuilder
+        .addAssetSupport(ecoAsset, limit: "200999")
+        .addAssetSupport(moonAsset, limit: "200999")
+        .build();
+    stellar.sign(trustTransaction, keyPairD);
+
+    success = await stellar.submitTransaction(trustTransaction);
+    assert(success);
+
+    // let e trust moon
+    txBuilder = await stellar.transaction(keyPairE);
+    trustTransaction =
+        txBuilder.addAssetSupport(moonAsset, limit: "200999").build();
+    stellar.sign(trustTransaction, keyPairE);
+
+    success = await stellar.submitTransaction(trustTransaction);
+    assert(success);
+
+    // fund accounts with issued assets
+    txBuilder = await stellar.transaction(keyPairA);
+    var fundTransaction = txBuilder
+        .transfer(accountCId, iomAsset, "100")
+        .transfer(accountBId, iomAsset, "100")
+        .transfer(accountBId, ecoAsset, "100")
+        .transfer(accountDId, moonAsset, "100")
+        .build();
+    stellar.sign(fundTransaction, keyPairA);
+    success = await stellar.submitTransaction(fundTransaction);
+    assert(success);
+
+    // B makes offer: sell 100 ECO - buy IOM, price 0.5
+    var sellOfferOpB = flutter_sdk.ManageSellOfferOperationBuilder(
+      ecoAsset.toAsset(),
+      iomAsset.toAsset(),
+      "100",
+      "0.5",
+    ).build();
+
+    // D makes offer: sell 100 MOON - buy ECO, price 0.5
+    var sellOfferOpD = flutter_sdk.ManageSellOfferOperationBuilder(
+      moonAsset.toAsset(),
+      ecoAsset.toAsset(),
+      "100",
+      "0.5",
+    ).setSourceAccount(accountDId).build();
+
+    txBuilder = await stellar.transaction(keyPairB);
+    var sellOfferTransaction =
+        txBuilder.addOperation(sellOfferOpB).addOperation(sellOfferOpD).build();
+    stellar.sign(sellOfferTransaction, keyPairB);
+    stellar.sign(sellOfferTransaction, keyPairD);
+
+    success = await stellar.submitTransaction(sellOfferTransaction);
+    assert(success);
+
+    // wait a bit for the ledger to close
+    await Future.delayed(const Duration(seconds: 3), () {});
+
+    // check if we can find the path to send 10 IOM to E, since E does not trust IOM
+    // expected IOM->ECO->MOON
+    var paymentPaths =
+        await stellar.findStrictSendPath(iomAsset, "10", accountEId);
+    assert(paymentPaths.length == 1);
+    var paymentPath = paymentPaths.first;
+
+    assert(paymentPath.destinationAsset == moonAsset);
+    assert(paymentPath.sourceAsset == iomAsset);
+
+    assert(double.parse(paymentPath.sourceAmount) == 10);
+    assert(double.parse(paymentPath.destinationAmount) == 40);
+
+    var assetsPath = paymentPath.path;
+    assert(assetsPath.length == 1);
+    assert(assetsPath.first == ecoAsset);
+
+    // C sends IOM to E (she receives MOON)
+    txBuilder = await stellar.transaction(keyPairC);
+    var strictSendTransaction = txBuilder
+        .strictSend(
+            sendAssetId: iomAsset,
+            sendAmount: "10",
+            destinationAddress: accountEId,
+            destinationAssetId: moonAsset,
+            destinationMinAmount: "38",
+            path: assetsPath)
+        .build();
+    stellar.sign(strictSendTransaction, keyPairC);
+
+    success = await stellar.submitTransaction(strictSendTransaction);
+    assert(success);
+
+    // check if E received MOON
+    var info = await stellar.account().getInfo(accountEId);
+    var balances = info.balances.where(
+        (balance) => StellarAssetId.fromAsset(balance.asset) == moonAsset);
+    assert(balances.isNotEmpty);
+    var moonBalanceOfE = double.parse(balances.first.balance);
+    assert(moonBalanceOfE == 40.0);
+
+    // next lets check strict receive
+
+    // for source account
+    paymentPaths = await stellar.findStrictReceivePathForSourceAddress(
+        moonAsset, "8", accountCId);
+    assert(paymentPaths.length == 1);
+    paymentPath = paymentPaths.first;
+
+    assert(paymentPath.destinationAsset == moonAsset);
+    assert(paymentPath.sourceAsset == iomAsset);
+
+    assert(double.parse(paymentPath.sourceAmount) == 2);
+    assert(double.parse(paymentPath.destinationAmount) == 8);
+
+    assetsPath = paymentPath.path;
+    assert(assetsPath.length == 1);
+    assert(assetsPath.first == ecoAsset);
+
+    // for source assets
+    paymentPaths = await stellar
+        .findStrictReceivePathForSourceAssets(moonAsset, "8", [iomAsset]);
+    assert(paymentPaths.length == 1);
+    paymentPath = paymentPaths.first;
+
+    assert(paymentPath.destinationAsset == moonAsset);
+    assert(paymentPath.sourceAsset == iomAsset);
+
+    assert(double.parse(paymentPath.sourceAmount) == 2);
+    assert(double.parse(paymentPath.destinationAmount) == 8);
+
+    assetsPath = paymentPath.path;
+    assert(assetsPath.length == 1);
+    assert(assetsPath.first == ecoAsset);
+
+    // send to E
+    txBuilder = await stellar.transaction(keyPairC);
+    var strictReceiveTransaction = txBuilder
+        .strictReceive(
+            sendAssetId: iomAsset,
+            sendMaxAmount: "2",
+            destinationAddress: accountEId,
+            destinationAssetId: moonAsset,
+            destinationAmount: "8",
+            path: assetsPath)
+        .build();
+    stellar.sign(strictReceiveTransaction, keyPairC);
+
+    success = await stellar.submitTransaction(strictReceiveTransaction);
+    assert(success);
+
+    // check if E received MOON
+    info = await stellar.account().getInfo(accountEId);
+    balances = info.balances.where(
+        (balance) => StellarAssetId.fromAsset(balance.asset) == moonAsset);
+    assert(balances.isNotEmpty);
+    moonBalanceOfE = double.parse(balances.first.balance);
+    assert(moonBalanceOfE == 48.0);
   });
 }
