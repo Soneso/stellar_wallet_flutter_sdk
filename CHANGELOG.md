@@ -1,3 +1,6 @@
+## [0.3.1] - 14.June.2024.
+- add support for path payments
+
 ## [0.3.0] - 24.Apr.2024.
 - add programmatic deposit and withdrawal (sep-6)
 
