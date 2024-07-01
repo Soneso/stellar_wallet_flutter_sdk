@@ -44,7 +44,7 @@ abstract class CommonTxBuilder<T> {
   }
 
   CommonTxBuilder<T> addAssetSupport(IssuedAssetId asset,
-      {String limit = "98398398293"}) {
+      {String limit = '922337203685.4775807'}) {
     var op = flutter_sdk.ChangeTrustOperationBuilder(asset.toAsset(), limit)
         .setSourceAccount(sourceAccount.accountId)
         .build();
