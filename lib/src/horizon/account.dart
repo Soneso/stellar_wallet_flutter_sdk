@@ -57,6 +57,8 @@ class SigningKeyPair extends AccountKeyPair {
 }
 
 class AccountService {
+  static const int pageLimit = 100;
+
   Config cfg;
   AccountService(this.cfg);
 
@@ -66,11 +68,11 @@ class AccountService {
     return SigningKeyPair.random();
   }
 
-  Future <flutter_sdk.AccountResponse> getInfo(String accountAddress) async {
+  Future<flutter_sdk.AccountResponse> getInfo(String accountAddress) async {
     var horizonUrl = cfg.stellar.horizonUrl;
     flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl);
     try {
-      return  await sdk.accounts.account(accountAddress);
+      return await sdk.accounts.account(accountAddress);
     } catch (e) {
       if (e is flutter_sdk.ErrorResponse) {
         if (e.code != 404) {
@@ -84,7 +86,7 @@ class AccountService {
     }
   }
 
-  Future <bool> accountExists(String accountAddress) async {
+  Future<bool> accountExists(String accountAddress) async {
     var horizonUrl = cfg.stellar.horizonUrl;
     flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl);
     try {
@@ -118,6 +120,62 @@ class AccountService {
     }
   }
 
+  /// Loads the list of the most recent payments in desc order
+  /// for the given account [address]. Loads up to 100 entries,
+  /// defined by [limit] which defaults to 100.
+  Future<List<flutter_sdk.OperationResponse>> loadRecentPayments(String address,
+      {int limit = pageLimit}) async {
+    if (!await accountExists(address)) {
+      return [];
+    }
+
+    // fetch payments from stellar
+    var horizonUrl = cfg.stellar.horizonUrl;
+    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl);
+
+    var loadLimit = pageLimit;
+    if (limit <= pageLimit && limit > 0) {
+      loadLimit = limit;
+    }
+
+    // loads the recent payments
+    var paymentsPage = await sdk.payments
+        .forAccount(address)
+        .order(flutter_sdk.RequestBuilderOrder.DESC)
+        .limit(loadLimit)
+        .execute();
+
+    return paymentsPage.records;
+  }
+
+  /// Loads the list of the most recent transactions in desc order
+  /// for the given account [address]. Loads up to 100 entries,
+  /// defined by [limit] which defaults to 100.
+  Future<List<flutter_sdk.TransactionResponse>> loadRecentTransactions(
+      String address,
+      {int limit = pageLimit}) async {
+    if (!await accountExists(address)) {
+      return [];
+    }
+
+    // fetch payments from stellar
+    var horizonUrl = cfg.stellar.horizonUrl;
+    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl);
+
+    var loadLimit = pageLimit;
+    if (limit <= pageLimit && limit > 0) {
+      loadLimit = limit;
+    }
+
+    // loads the recent payments (max 100)
+    var transactionsPage = await sdk.transactions
+        .forAccount(address)
+        .order(flutter_sdk.RequestBuilderOrder.DESC)
+        .limit(loadLimit)
+        .execute();
+
+    return transactionsPage.records;
+  }
 }
 
 /// Account weights threshold

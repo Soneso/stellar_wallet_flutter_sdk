@@ -160,6 +160,15 @@ void main() {
     myAccount = await account.getInfo(accountKeyPair.address);
     assert(myAccount.balances.length == 1);
     assert(myAccount.balances[0].assetCode != "USDC");
+
+    // check recent transactions
+    var recentTransactions = await account.loadRecentTransactions(accountKeyPair.address, limit:2);
+    assert(recentTransactions.length == 2);
+    assert(recentTransactions.first.successful);
+    assert(recentTransactions.first.operationCount == 1);
+    assert(recentTransactions.last.successful);
+    assert(recentTransactions.last.operationCount == 1);
+
   });
 
   Future<String> sendTransactionToBackend(String xdrString) async {
@@ -716,5 +725,11 @@ void main() {
     assert(balances.isNotEmpty);
     moonBalanceOfE = double.parse(balances.first.balance);
     assert(moonBalanceOfE == 48.0);
+
+    // check recent payments
+    var recentPayments = await account.loadRecentPayments(keyPairC.address, limit:2);
+    assert(recentPayments.length == 2);
+    assert(recentPayments.first is flutter_sdk.PathPaymentStrictReceiveOperationResponse);
+    assert(recentPayments.last is flutter_sdk.PathPaymentStrictSendOperationResponse);
   });
 }
