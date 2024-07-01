@@ -479,8 +479,8 @@ void main() {
     var server = stellar.server;
     var transactions =
         await server.transactions.forAccount(newAccount.accountId).execute();
-    assert(transactions.records != null);
-    assert(transactions.records!.length == 2);
+
+    assert(transactions.records.length == 2);
     /*for (var tx in transactions.records!) {
       print(tx.hash);
     }*/

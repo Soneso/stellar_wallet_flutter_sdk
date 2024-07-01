@@ -336,7 +336,7 @@ void main() {
               AbstractTransaction.fromEnvelopeXdr(envelopeXdr)
                   .hash(Network.TESTNET);
           final valid = userKeyPair.verify(
-              transactionHash, userSignature.signature!.signature!);
+              transactionHash, userSignature.signature.signature);
           if (valid) {
             return http.Response(requestJWTSuccess(), 200); // OK
           }
@@ -392,9 +392,9 @@ void main() {
               AbstractTransaction.fromEnvelopeXdr(envelopeXdr)
                   .hash(Network.TESTNET);
           final userSigValid = userKeyPair.verify(
-              transactionHash, userSignature.signature!.signature!);
+              transactionHash, userSignature.signature.signature);
           final clientSigValid = clientKeyPair.verify(
-              transactionHash, clientSignature.signature!.signature!);
+              transactionHash, clientSignature.signature.signature);
           if (userSigValid && clientSigValid) {
             return http.Response(requestJWTSuccess(), 200); // OK
           }
@@ -463,7 +463,7 @@ void main() {
               AbstractTransaction.fromEnvelopeXdr(envelopeXdr)
                   .hash(Network.TESTNET);
           final valid = userKeyPair.verify(
-              transactionHash, userSignature.signature!.signature!);
+              transactionHash, userSignature.signature.signature);
           if (valid) {
             return http.Response(requestJWTSuccess(), 200); // OK
           }

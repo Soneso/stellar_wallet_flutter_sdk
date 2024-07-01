@@ -179,11 +179,9 @@ class Stellar {
           .sourceAmount(sourceAmount)
           .destinationAccount(destinationAddress)
           .execute();
-      if (strictSendPaths.records != null) {
-        final records = strictSendPaths.records!;
-        for (final record in records) {
-          result.add(PaymentPath.fromPathResponse(record));
-        }
+
+      for (final record in strictSendPaths.records) {
+        result.add(PaymentPath.fromPathResponse(record));
       }
     } catch (exception) {
       // request failed.
@@ -214,11 +212,9 @@ class Stellar {
           .sourceAmount(sourceAmount)
           .destinationAssets(sdkDestinationAssets)
           .execute();
-      if (strictSendPaths.records != null) {
-        final records = strictSendPaths.records!;
-        for (final record in records) {
-          result.add(PaymentPath.fromPathResponse(record));
-        }
+
+      for (final record in strictSendPaths.records) {
+        result.add(PaymentPath.fromPathResponse(record));
       }
     } catch (exception) {
       // request failed.
@@ -251,11 +247,9 @@ class Stellar {
           .destinationAmount(destinationAmount)
           .sourceAssets(sdkSourceAssets)
           .execute();
-      if (strictSendPaths.records != null) {
-        final records = strictSendPaths.records!;
-        for (final record in records) {
-          result.add(PaymentPath.fromPathResponse(record));
-        }
+
+      for (final record in strictSendPaths.records) {
+        result.add(PaymentPath.fromPathResponse(record));
       }
     } catch (exception) {
       // request failed.
@@ -282,11 +276,9 @@ class Stellar {
           .destinationAmount(destinationAmount)
           .sourceAccount(sourceAddress)
           .execute();
-      if (strictSendPaths.records != null) {
-        final records = strictSendPaths.records!;
-        for (final record in records) {
-          result.add(PaymentPath.fromPathResponse(record));
-        }
+
+      for (final record in strictSendPaths.records) {
+        result.add(PaymentPath.fromPathResponse(record));
       }
     } catch (exception) {
       // request failed.

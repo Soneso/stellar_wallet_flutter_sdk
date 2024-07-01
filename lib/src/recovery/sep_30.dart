@@ -189,14 +189,11 @@ class AccountRecover extends AbstractAccountRecover {
           rethrow;
         }
       }
-      flutter_sdk.XdrDecoratedSignature decoratedSignature =
-          flutter_sdk.XdrDecoratedSignature();
-      flutter_sdk.XdrSignature signature = flutter_sdk.XdrSignature();
-      signature.signature = base64Decode(response.signature);
-      decoratedSignature.signature = signature;
-      decoratedSignature.hint =
-          flutter_sdk.KeyPair.fromAccountId(auth.signerAddress).signatureHint;
-      return decoratedSignature;
+
+      return flutter_sdk.XdrDecoratedSignature(
+          flutter_sdk.KeyPair.fromAccountId(auth.signerAddress).signatureHint,
+          flutter_sdk.XdrSignature(base64Decode(response.signature)));
+
     } else {
       throw ValidationException("key not found in servers map");
     }

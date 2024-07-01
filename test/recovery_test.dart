@@ -200,7 +200,7 @@ void main() {
             flutter_sdk.AbstractTransaction.fromEnvelopeXdr(envelopeXdr)
                 .hash(flutter_sdk.Network.TESTNET);
         final valid = userKeyPair.verify(
-            transactionHash, userSignature.signature!.signature!);
+            transactionHash, userSignature.signature.signature);
         if (valid) {
           return http.Response(requestJWTSuccess(), 200); // OK
         }
@@ -294,7 +294,7 @@ void main() {
           transaction.sign(server2KeyPair, flutter_sdk.Network.TESTNET);
         }
         var signature = base64Encode(
-            transaction.signatures.last.signature!.signature!.toList());
+            transaction.signatures.last.signature.signature.toList());
         return http.Response(requestSignSuccess(signature), 200); // OK
       }
     }
