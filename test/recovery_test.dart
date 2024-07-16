@@ -124,7 +124,7 @@ void main() {
       flutter_sdk.KeyPair serverKeyPair,
       String anchorDomain,
       String webAuthDomain) {
-    final transactionAccount = flutter_sdk.Account(serverKeyPair.accountId, -1);
+    final transactionAccount = flutter_sdk.Account(serverKeyPair.accountId, BigInt.from(-1));
     final flutter_sdk.Transaction transaction =
         flutter_sdk.TransactionBuilder(transactionAccount)
             .addOperation(validFirstManageDataOp(accountId, anchorDomain))

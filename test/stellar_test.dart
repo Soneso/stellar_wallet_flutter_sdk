@@ -28,7 +28,7 @@ void main() {
 
     // validate
     var newAccount = await account.getInfo(newAccountKeyPair.address);
-    assert(newAccount.sequenceNumber > 0);
+    assert(newAccount.sequenceNumber > BigInt.zero);
     var balances = newAccount.balances;
     assert(balances.length == 1);
     assert(balances[0].assetType == 'native');
@@ -205,7 +205,7 @@ void main() {
 
     // validate
     var newAccount = await account.getInfo(newKeyPair.address);
-    assert(newAccount.sequenceNumber > 0);
+    assert(newAccount.sequenceNumber > BigInt.zero);
     var balances = newAccount.balances;
     assert(balances.length == 1);
     assert(balances[0].assetType == 'native');
@@ -445,7 +445,7 @@ void main() {
 
     // validate
     var newAccount = await account.getInfo(newKeyPair.address);
-    assert(newAccount.sequenceNumber > 0);
+    assert(newAccount.sequenceNumber > BigInt.zero);
     var balances = newAccount.balances;
     assert(balances.length == 1);
     assert(balances[0].assetType == 'native');
@@ -479,7 +479,7 @@ void main() {
 
     // validate
     var newAccount = await account.getInfo(account2KeyPair.address);
-    assert(newAccount.sequenceNumber > 0);
+    assert(newAccount.sequenceNumber > BigInt.zero);
     var balances = newAccount.balances;
     assert(balances.length == 1);
     assert(balances[0].assetType == 'native');

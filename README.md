@@ -13,7 +13,7 @@ utilizes [Flutter Stellar SDK](https://github.com/Soneso/stellar_flutter_sdk) to
 1. Add the dependency to your pubspec.yaml file:
 ```
 dependencies:
-  stellar_wallet_flutter_sdk: ^0.3.2
+  stellar_wallet_flutter_sdk: ^0.3.3
 ```
 2. Install it (command line or IDE):
 ```

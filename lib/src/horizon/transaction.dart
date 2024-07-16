@@ -186,7 +186,7 @@ class TxBuilder extends CommonTxBuilder<TxBuilder> {
             .setSourceAccount(sponsorAccount.address)
             .build();
     sdkBuilder.addOperation(beginSponsoringOp);
-    var builderAccount = flutter_sdk.Account(sponsoredAccountId, 0);
+    var builderAccount = flutter_sdk.Account(sponsoredAccountId, BigInt.zero);
     var opBuilder = SponsoringBuilder(builderAccount, sponsorAccount);
     buildingFunction(opBuilder);
     var tx = opBuilder.build();

@@ -1,3 +1,6 @@
+## [0.3.3] - 16.July.2024.
+- update to use the new version 1.8.3 of the core flutter sdk
+
 ## [0.3.2] - 1.July.2024.
 - update to use the new version 1.8.2 of the core flutter sdk
 - add account service utility methods loadRecentPayments and loadRecentTransactions
