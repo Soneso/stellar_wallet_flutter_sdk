@@ -15,8 +15,9 @@ import 'package:http/http.dart' as http;
 class Sep6 {
   Anchor anchor;
   http.Client? httpClient;
+  Map<String, String>? httpRequestHeaders;
 
-  Sep6(this.anchor, {this.httpClient});
+  Sep6(this.anchor, {this.httpClient, this.httpRequestHeaders});
 
   /// Get basic info from the anchor about what their TRANSFER_SERVER supports.
   /// [language] (optional) Defaults to en if not specified or if the specified
@@ -24,7 +25,8 @@ class Sep6 {
   /// Error fields and other human readable messages in the response should
   /// be in this language.
   /// optional [authToken] token previously received from the anchor via the SEP-10
-  /// authentication flow
+  /// authentication flow.
+  /// Throws [AnchorDepositAndWithdrawalAPINotSupported] if the anchor does not support SEP-06.
   Future<Sep6Info> info({String? language, AuthToken? authToken}) async {
     var service = await _transferService();
     var response = await service.info(language: language, jwt: authToken?.jwt);
@@ -233,7 +235,8 @@ class Sep6 {
 
     return flutter_sdk.TransferServerService(
         tomlInfo.services.sep6!.transferServer,
-        httpClient: httpClient);
+        httpClient: httpClient,
+        httpRequestHeaders: httpRequestHeaders);
   }
 }
 

@@ -18,8 +18,9 @@ import 'package:http/http.dart' as http;
 class Sep24 {
   Anchor anchor;
   http.Client? httpClient;
+  Map<String, String>? httpRequestHeaders;
 
-  Sep24(this.anchor, {this.httpClient});
+  Sep24(this.anchor, {this.httpClient, this.httpRequestHeaders});
 
   /// Initiates interactive withdrawal using
   /// [SEP-24](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0024.md).
@@ -69,7 +70,8 @@ class Sep24 {
     flutter_sdk.TransferServerSEP24Service service =
         flutter_sdk.TransferServerSEP24Service(
             tomlInfo.services.sep24!.transferServerSep24,
-            httpClient: httpClient);
+            httpClient: httpClient,
+            httpRequestHeaders: httpRequestHeaders);
     flutter_sdk.SEP24InteractiveResponse response =
         await service.withdraw(request);
     return InteractiveFlowResponse.from(response);
@@ -129,7 +131,8 @@ class Sep24 {
     flutter_sdk.TransferServerSEP24Service service =
         flutter_sdk.TransferServerSEP24Service(
             tomlInfo.services.sep24!.transferServerSep24,
-            httpClient: httpClient);
+            httpClient: httpClient,
+            httpRequestHeaders: httpRequestHeaders);
     flutter_sdk.SEP24InteractiveResponse response =
         await service.deposit(request);
     return InteractiveFlowResponse.from(response);
@@ -137,6 +140,7 @@ class Sep24 {
 
   /// Available anchor services and information about them. For example, limits,
   /// currency, fees, payment methods.
+  /// Throws [AnchorInteractiveFlowNotSupported] if SEP-24 is not supported.
   Future<AnchorServiceInfo> getServiceInfo() async {
     return anchor.infoHolder.serviceInfo;
   }
@@ -174,7 +178,8 @@ class Sep24 {
     flutter_sdk.TransferServerSEP24Service service =
         flutter_sdk.TransferServerSEP24Service(
             tomlInfo.services.sep24!.transferServerSep24,
-            httpClient: httpClient);
+            httpClient: httpClient,
+            httpRequestHeaders: httpRequestHeaders);
     try {
       flutter_sdk.SEP24TransactionResponse response =
           await service.transaction(request);
@@ -220,7 +225,8 @@ class Sep24 {
     flutter_sdk.TransferServerSEP24Service service =
         flutter_sdk.TransferServerSEP24Service(
             tomlInfo.services.sep24!.transferServerSep24,
-            httpClient: httpClient);
+            httpClient: httpClient,
+            httpRequestHeaders: httpRequestHeaders);
 
     try {
       flutter_sdk.SEP24TransactionResponse response =
@@ -280,7 +286,8 @@ class Sep24 {
     flutter_sdk.TransferServerSEP24Service service =
         flutter_sdk.TransferServerSEP24Service(
             tomlInfo.services.sep24!.transferServerSep24,
-            httpClient: httpClient);
+            httpClient: httpClient,
+            httpRequestHeaders: httpRequestHeaders);
     flutter_sdk.SEP24TransactionsResponse response =
         await service.transactions(request);
     List<Sep24Transaction> result =
@@ -342,7 +349,8 @@ class Sep24 {
     flutter_sdk.TransferServerSEP24Service service =
         flutter_sdk.TransferServerSEP24Service(
             tomlInfo.services.sep24!.transferServerSep24,
-            httpClient: httpClient);
+            httpClient: httpClient,
+            httpRequestHeaders: httpRequestHeaders);
     flutter_sdk.SEP24TransactionsResponse response =
         await service.transactions(request);
     List<Sep24Transaction> result =

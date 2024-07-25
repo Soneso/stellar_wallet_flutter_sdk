@@ -20,12 +20,20 @@ class Anchor {
   Config cfg;
   String homeDomain;
   http.Client? httpClient;
+  Map<String, String>? httpRequestHeaders;
   String? lang;
   late InfoHolder infoHolder;
 
-  Anchor(this.cfg, this.homeDomain, {this.httpClient, this.lang}) {
+  Anchor(this.cfg, this.homeDomain,
+      {this.httpClient, this.httpRequestHeaders, this.lang}) {
+
+    httpClient ??= cfg.app.defaultClient;
+    httpRequestHeaders ??= cfg.app.defaultHttpRequestHeaders;
+
     infoHolder = InfoHolder(cfg.stellar.network, homeDomain,
-        httpClient: httpClient, lang: lang);
+        httpClient: httpClient,
+        httpRequestHeaders: httpRequestHeaders,
+        lang: lang);
   }
 
   /// Get anchor information from a TOML file.
@@ -49,7 +57,7 @@ class Anchor {
       throw AnchorAuthNotSupported();
     }
     return Sep10(cfg, homeDomain, toml.webAuthEndpoint!, toml.signingKey!,
-        httpClient: httpClient);
+        httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
   }
 
   /// Create new customer object to handle customer records with the anchor using SEP-12.
@@ -60,19 +68,22 @@ class Anchor {
     if (toml.kycServer == null) {
       throw KYCServerNotFoundException();
     }
-    return Sep12(token, toml.kycServer!, httpClient: httpClient);
+    return Sep12(token, toml.kycServer!,
+        httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
   }
 
   /// Creates new interactive flow for given anchor. It can be used for withdrawal or deposit.
   /// Returns [Sep24] object representing the interactive flow service.
   Sep24 sep24() {
-    return Sep24(this, httpClient: httpClient);
+    return Sep24(this,
+        httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
   }
 
   /// Creates new transfer service as described in SEP-6 for given anchor.
   /// Returns [Sep6] object representing the transfer service.
   Sep6 sep6() {
-    return Sep6(this, httpClient: httpClient);
+    return Sep6(this,
+        httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
   }
 
   /// Creates a quote service as described in SEP-38.
@@ -84,7 +95,9 @@ class Anchor {
       throw AnchorQuoteServerNotFoundException();
     }
     return Sep38(toml.anchorQuoteServer!,
-        token: authToken, httpClient: httpClient);
+        token: authToken,
+        httpClient: httpClient,
+        httpRequestHeaders: httpRequestHeaders);
   }
 }
 
@@ -92,12 +105,14 @@ class InfoHolder {
   flutter_sdk.Network network;
   String homeDomain;
   http.Client? httpClient;
+  Map<String, String>? httpRequestHeaders;
   String? lang;
 
   TomlInfo? _info;
   AnchorServiceInfo? _serviceInfo;
 
-  InfoHolder(this.network, this.homeDomain, {this.httpClient, this.lang});
+  InfoHolder(this.network, this.homeDomain,
+      {this.httpClient, this.httpRequestHeaders, this.lang});
 
   Future<TomlInfo> get info async {
     if (_info != null) {
@@ -106,7 +121,7 @@ class InfoHolder {
     try {
       flutter_sdk.StellarToml stellarToml =
           await flutter_sdk.StellarToml.fromDomain(homeDomain,
-              httpClient: httpClient);
+              httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
       _info = TomlInfo.from(stellarToml);
       return _info!;
     } catch (e) {
@@ -127,7 +142,8 @@ class InfoHolder {
     flutter_sdk.TransferServerSEP24Service sep24Service =
         flutter_sdk.TransferServerSEP24Service(
             tomlInfo.services.sep24!.transferServerSep24,
-            httpClient: httpClient);
+            httpClient: httpClient,
+            httpRequestHeaders: httpRequestHeaders);
     flutter_sdk.SEP24InfoResponse sep24InfoResponse =
         await sep24Service.info(lang);
     _serviceInfo = AnchorServiceInfo.from(sep24InfoResponse);

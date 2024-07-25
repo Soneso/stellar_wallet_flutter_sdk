@@ -13,14 +13,16 @@ class Sep38 {
   AuthToken? token;
   String serviceAddress;
   http.Client? httpClient;
+  Map<String, String>? httpRequestHeaders;
   late flutter_sdk.SEP38QuoteService quoteService;
 
   /// Constructor accepting the [serviceAddress] from the server (ANCHOR_QUOTE_SERVER in stellar.toml).
   /// It also accepts an optional [httpClient] to be used for requests. If not provided, this service will use its own http client.
   /// The SEP-10 auth [token] is optional, but required for [requestQuote] and [getQuote] methods (endpoints).
-  Sep38(this.serviceAddress, {this.httpClient, this.token}) {
-    quoteService =
-        flutter_sdk.SEP38QuoteService(serviceAddress, httpClient: httpClient);
+  Sep38(this.serviceAddress,
+      {this.httpClient, this.httpRequestHeaders, this.token}) {
+    quoteService = flutter_sdk.SEP38QuoteService(serviceAddress,
+        httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
   }
 
   /// This endpoint returns the supported Stellar assets and off-chain assets available for trading.

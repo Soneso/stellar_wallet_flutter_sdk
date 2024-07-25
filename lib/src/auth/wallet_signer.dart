@@ -8,7 +8,6 @@ import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
 import 'package:stellar_wallet_flutter_sdk/src/exceptions/exceptions.dart';
 import 'package:stellar_wallet_flutter_sdk/src/horizon/account.dart';
 import 'package:http/http.dart' as http;
-import '../wallet.dart';
 
 /// Abstract class to provide wallet signer methods.
 abstract class WalletSigner {
@@ -49,16 +48,13 @@ class DomainSigner extends DefaultSigner {
 
   DomainSigner(this.url,
       {http.Client? httpClient, Map<String, String>? requestHeaders}) {
-    if (httpClient != null) {
-      this.httpClient = httpClient;
-    } else {
-      this.httpClient = http.Client();
-    }
+
+    this.httpClient = httpClient ?? http.Client();
 
     if (requestHeaders != null) {
-      this.requestHeaders = requestHeaders;
+      this.requestHeaders = {...requestHeaders};
     } else {
-      this.requestHeaders = Wallet.requestHeaders;
+      this.requestHeaders = {};
       this.requestHeaders["Content-Type"] = "application/json";
     }
   }

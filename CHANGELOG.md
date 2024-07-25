@@ -1,3 +1,7 @@
+## [0.3.4] - 25.July.2024.
+- update to use the new version 1.8.4 of the core flutter sdk
+- extend sep-12 support: get customer information by different parameters
+
 ## [0.3.3] - 16.July.2024.
 - update to use the new version 1.8.3 of the core flutter sdk
 

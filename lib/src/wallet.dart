@@ -21,12 +21,7 @@ const horizonLimitDefault = 10;
 
 /// Wallet SDK main entry point. It provides methods to build wallet applications on the Stellar network.
 class Wallet {
-  static const versionNumber = "0.3.3";
-
-  static final Map<String, String> requestHeaders = {
-    "X-Client-Name": "stellar_wallet_flutter_sdk",
-    "X-Client-Version": versionNumber
-  };
+  static const versionNumber = "0.3.4";
 
   static final Wallet publicNet = Wallet(StellarConfiguration.publicNet);
   static final Wallet testNet = Wallet(StellarConfiguration.testNet);
@@ -35,7 +30,8 @@ class Wallet {
   StellarConfiguration stellarConfiguration;
   late ApplicationConfiguration applicationConfiguration;
 
-  Wallet(this.stellarConfiguration, {ApplicationConfiguration? applicationConfiguration}) {
+  Wallet(this.stellarConfiguration,
+      {ApplicationConfiguration? applicationConfiguration}) {
     if (applicationConfiguration != null) {
       this.applicationConfiguration = applicationConfiguration;
     } else {
@@ -48,14 +44,18 @@ class Wallet {
     return Stellar(cfg);
   }
 
-  Anchor anchor(String homeDomain, {http.Client? httpClient}) {
+  Anchor anchor(String homeDomain,
+      {http.Client? httpClient, Map<String, String>? httpRequestHeaders}) {
     Config cfg = Config(stellarConfiguration, applicationConfiguration);
-    return Anchor(cfg, homeDomain, httpClient: httpClient);
+    return Anchor(cfg, homeDomain,
+        httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
   }
 
-  Recovery recovery(Map<RecoveryServerKey, RecoveryServer> servers, {http.Client? httpClient} ) {
+  Recovery recovery(Map<RecoveryServerKey, RecoveryServer> servers,
+      {http.Client? httpClient, Map<String, String>? httpRequestHeaders}) {
     Config cfg = Config(stellarConfiguration, applicationConfiguration);
-    return Recovery(cfg, servers, httpClient: httpClient);
+    return Recovery(cfg, servers,
+        httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
   }
 }
 
@@ -65,8 +65,8 @@ class StellarConfiguration {
       flutter_sdk.Network.TESTNET, "https://horizon-testnet.stellar.org");
   static final StellarConfiguration futureNet = StellarConfiguration(
       flutter_sdk.Network.FUTURENET, "https://horizon-futurenet.stellar.org");
-  static final StellarConfiguration publicNet =
-      StellarConfiguration(flutter_sdk.Network.PUBLIC, "https://horizon.stellar.org");
+  static final StellarConfiguration publicNet = StellarConfiguration(
+      flutter_sdk.Network.PUBLIC, "https://horizon.stellar.org");
 
   /// network to be used.
   flutter_sdk.Network network;
@@ -81,18 +81,13 @@ class StellarConfiguration {
   /// default transaction timeout
   Duration defaultTimeout;
 
-  /// optional HTTP client to be used for network requests.
-  http.Client? httpClient;
-
   StellarConfiguration(this.network, this.horizonUrl,
       {this.baseFee = flutter_sdk.AbstractTransaction.MIN_BASE_FEE,
-      this.defaultTimeout = const Duration(minutes: 3),
-      this.httpClient});
+      this.defaultTimeout = const Duration(minutes: 3)});
 }
 
 /// Application configuration
 class ApplicationConfiguration {
-
   /// Default signer implementation to be used across application.
   WalletSigner defaultSigner = DefaultSigner();
 
@@ -102,8 +97,14 @@ class ApplicationConfiguration {
   /// optional default HTTP client configuration to be used used across the app.
   http.Client? defaultClient;
 
+  /// optional default HTTP request headers to be used in anchor and recovery service related requests.
+  Map<String, String>? defaultHttpRequestHeaders;
+
   ApplicationConfiguration(
-  {WalletSigner? defaultSigner, this.defaultClientDomain, this.defaultClient}) {
+      {WalletSigner? defaultSigner,
+      this.defaultClientDomain,
+      this.defaultClient,
+      this.defaultHttpRequestHeaders}) {
     if (defaultSigner != null) {
       this.defaultSigner = defaultSigner;
     }

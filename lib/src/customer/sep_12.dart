@@ -12,18 +12,42 @@ class Sep12 {
   AuthToken token;
   String serviceAddress;
   http.Client? httpClient;
+  Map<String, String>? httpRequestHeaders;
   late flutter_sdk.KYCService kycService;
 
-  Sep12(this.token, this.serviceAddress, {this.httpClient}) {
-    kycService = flutter_sdk.KYCService(serviceAddress, httpClient: httpClient);
+  Sep12(this.token, this.serviceAddress,
+      {this.httpClient, this.httpRequestHeaders}) {
+    kycService = flutter_sdk.KYCService(serviceAddress,
+        httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
   }
 
   /// Get customer information by customer [id] and [type].
   Future<GetCustomerResponse> getByIdAndType(String id, String type) async {
+    return await get(id: id, type: type);
+  }
+
+  /// Get customer information only by using the auth token.
+  Future<GetCustomerResponse> getByAuthTokenOnly() async {
+    return await get();
+  }
+
+  /// Get customer information by different parameters. See Sep-12.
+  /// If all parameters are null, it loads by auth token only.
+  Future<GetCustomerResponse> get(
+      {String? id,
+      String? account,
+      String? memo,
+      String? type,
+      String? transactionId,
+      String? lang}) async {
     flutter_sdk.GetCustomerInfoRequest request =
         flutter_sdk.GetCustomerInfoRequest();
+
     request.id = id;
+    request.account = account;
+    request.memo = memo;
     request.type = type;
+    request.transactionId = transactionId;
     request.jwt = token.jwt;
 
     flutter_sdk.GetCustomerInfoResponse infoResponse =
@@ -33,16 +57,19 @@ class Sep12 {
 
   /// Create a new customer. Pass a map containing customer [sep9Info]. To create a new customer fields
   /// first_name, last_name, and email_address are required. You can also pass [sep9Files].
-  /// The [type] of action the customer is being KYC for can optionally be passed. See the Type
+  /// The [type] of action the customer is being KYC for can optionally be passed.
+  /// [memo] and [transactionId] are also optional parameters. See the
   /// Specification on SEP-12 definition.
   Future<AddCustomerResponse> add(Map<String, String> sep9Info,
-      {Map<String, Uint8List>? sep9Files, String? type}) async {
+      {Map<String, Uint8List>? sep9Files, String? memo, String? type, String? transactionId}) async {
     flutter_sdk.PutCustomerInfoRequest request =
         flutter_sdk.PutCustomerInfoRequest();
     request.jwt = token.jwt;
     request.customFields = sep9Info;
     request.customFiles = sep9Files;
+    request.memo = memo;
     request.type = type;
+    request.transactionId = transactionId;
     flutter_sdk.PutCustomerInfoResponse infoResponse =
         await kycService.putCustomerInfo(request);
     return AddCustomerResponse.from(infoResponse);
@@ -51,16 +78,19 @@ class Sep12 {
   /// Update a customer by [id] of the customer as returned in the response of an add request. If the
   /// customer has not been registered, they do not yet have an id. You can pass a map containing
   /// customer [sep9Info] and [sep9Files]. The [type] of action the customer is being KYC for can
-  /// optionally be passed. See the Type Specification on SEP-12 definition.
+  /// optionally be passed. [memo] and [transactionId] are also optional parameters. See the
+  /// Specification on SEP-12 definition.
   Future<AddCustomerResponse> update(Map<String, String> sep9Info, String id,
-      {Map<String, Uint8List>? sep9Files, String? type}) async {
+      {Map<String, Uint8List>? sep9Files, String? memo, String? type, String? transactionId}) async {
     flutter_sdk.PutCustomerInfoRequest request =
         flutter_sdk.PutCustomerInfoRequest();
     request.jwt = token.jwt;
     request.id = id;
     request.customFields = sep9Info;
     request.customFiles = sep9Files;
+    request.memo = memo;
     request.type = type;
+    request.transactionId = transactionId;
     flutter_sdk.PutCustomerInfoResponse infoResponse =
         await kycService.putCustomerInfo(request);
     return AddCustomerResponse.from(infoResponse);
@@ -68,15 +98,16 @@ class Sep12 {
 
   /// This endpoint allows servers to accept data values, usually confirmation codes, that verify a previously provided field via add.
   /// Pass a map containing the sep 9 [verificationFields] for the customer identified by [id].
-  Future<GetCustomerResponse> verify(Map<String, String> verificationFields, String id) async {
+  Future<GetCustomerResponse> verify(
+      Map<String, String> verificationFields, String id) async {
     flutter_sdk.PutCustomerVerificationRequest request =
-    flutter_sdk.PutCustomerVerificationRequest();
+        flutter_sdk.PutCustomerVerificationRequest();
     request.jwt = token.jwt;
     request.id = id;
     request.verificationFields = verificationFields;
 
     flutter_sdk.GetCustomerInfoResponse infoResponse =
-    await kycService.putCustomerVerification(request);
+        await kycService.putCustomerVerification(request);
     return GetCustomerResponse.from(infoResponse);
   }
 

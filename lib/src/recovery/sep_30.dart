@@ -30,8 +30,10 @@ class AccountRecover extends AbstractAccountRecover {
   StellarConfiguration stellar;
   Map<RecoveryServerKey, RecoveryServer> servers;
   http.Client? httpClient;
+  Map<String, String>? httpRequestHeaders;
 
-  AccountRecover(this.stellar, this.servers, this.httpClient);
+  AccountRecover(this.stellar, this.servers,
+      {this.httpClient, this.httpRequestHeaders});
 
   /// Replace lost device key with a new key
   /// @account target account
@@ -174,7 +176,7 @@ class AccountRecover extends AbstractAccountRecover {
       RecoveryServerSigning auth = serverAuth.value;
       flutter_sdk.SEP30RecoveryService service =
           flutter_sdk.SEP30RecoveryService(server.endpoint,
-              httpClient: httpClient);
+              httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
       flutter_sdk.SEP30SignatureResponse? response;
       try {
         response = await service.signTransaction(
@@ -193,7 +195,6 @@ class AccountRecover extends AbstractAccountRecover {
       return flutter_sdk.XdrDecoratedSignature(
           flutter_sdk.KeyPair.fromAccountId(auth.signerAddress).signatureHint,
           flutter_sdk.XdrSignature(base64Decode(response.signature)));
-
     } else {
       throw ValidationException("key not found in servers map");
     }
@@ -257,8 +258,11 @@ class Recovery extends AccountRecover {
   Config cfg;
 
   Recovery(this.cfg, Map<RecoveryServerKey, RecoveryServer> servers,
-      {http.Client? httpClient})
-      : super(cfg.stellar, servers, httpClient);
+      {http.Client? httpClient, Map<String, String>? httpRequestHeaders})
+      : super(cfg.stellar, servers,
+            httpClient: httpClient ?? cfg.app.defaultClient,
+            httpRequestHeaders:
+                httpRequestHeaders ?? cfg.app.defaultHttpRequestHeaders);
 
   /// Create new Sep10 object to authenticate account with the recovery server using SEP-10.
   Future<Sep10> sep10Auth(RecoveryServerKey key) async {
@@ -268,7 +272,8 @@ class Recovery extends AccountRecover {
       try {
         stellarToml = await flutter_sdk.StellarToml.fromDomain(
             server.homeDomain,
-            httpClient: httpClient);
+            httpClient: httpClient,
+            httpRequestHeaders: httpRequestHeaders);
       } catch (e) {
         throw TomlNotFoundException(e.toString());
       }
@@ -288,7 +293,7 @@ class Recovery extends AccountRecover {
 
       return Sep10(cfg, server.homeDomain, server.authEndpoint,
           stellarToml.generalInformation.signingKey!,
-          httpClient: httpClient);
+          httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
     } else {
       throw ValidationException("key not found in servers map");
     }
@@ -339,7 +344,7 @@ class Recovery extends AccountRecover {
 
         flutter_sdk.SEP30RecoveryService service =
             flutter_sdk.SEP30RecoveryService(server.endpoint,
-                httpClient: httpClient);
+                httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
 
         flutter_sdk.SEP30AccountResponse? response;
         try {
@@ -487,7 +492,7 @@ class Recovery extends AccountRecover {
       flutter_sdk.SEP30Request request = flutter_sdk.SEP30Request(identities);
       flutter_sdk.SEP30RecoveryService service =
           flutter_sdk.SEP30RecoveryService(server.endpoint,
-              httpClient: httpClient);
+              httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
       flutter_sdk.SEP30AccountResponse response = await service.registerAccount(
           account.address, request, authToken.jwt);
       if (response.signers.isEmpty) {

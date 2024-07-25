@@ -18,10 +18,11 @@ class Sep10 {
   String serverAuthEndpoint;
   String serverSigningKey;
   http.Client? httpClient;
+  Map<String, String>? httpRequestHeaders;
 
   Sep10(this.cfg, this.serverHomeDomain, this.serverAuthEndpoint,
       this.serverSigningKey,
-      {this.httpClient});
+      {this.httpClient, this.httpRequestHeaders});
 
   /// Authenticates to an external server.
   /// Uses [userKeyPair] to extract the address to sign for. Optionally you can
@@ -37,7 +38,7 @@ class Sep10 {
       WalletSigner? clientDomainSigner}) async {
     flutter_sdk.WebAuth webAuth = flutter_sdk.WebAuth(serverAuthEndpoint,
         cfg.stellar.network, serverSigningKey, serverHomeDomain,
-        httpClient: httpClient);
+        httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
     try {
       String jwtToken;
       if (clientDomain != null && clientDomainSigner != null) {
