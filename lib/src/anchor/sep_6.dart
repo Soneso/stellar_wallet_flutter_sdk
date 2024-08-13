@@ -216,6 +216,30 @@ class Sep6 {
     return Sep6Transaction.fromAnchorTransaction(response.transaction);
   }
 
+  /// This endpoint is deprecated in SEP-06. Nevertheless, some anchors still provide
+  /// fee information only through this endpoint.
+  /// As parameters, provide the kind of [operation] (deposit or withdraw),
+  /// optionally the [type] of deposit or withdrawal (SEPA, bank_account, cash, etc...),
+  /// the stellar [assetCode] of the asset to be deposited or withdrawn, the
+  /// [amount] of the asset that will be deposited/withdrawn and the previously
+  /// received SEP-10 [authToken] if authentication is required.
+  Future<double> fee(
+      {required String operation,
+      String? type,
+      required String assetCode,
+      required double amount,
+      AuthToken? authToken}) async {
+    var service = await _transferService();
+    var request = flutter_sdk.FeeRequest(
+        operation: operation,
+        assetCode: assetCode,
+        amount: amount,
+        type: type,
+        jwt: authToken?.jwt);
+    var response = await service.fee(request);
+    return response.fee;
+  }
+
   /// Creates new transaction watcher.
   /// You can pass the [pollInterval] in which requests to the Anchor are being made.
   /// If not specified, it defaults to 5 seconds. You can also pass your own [exceptionHandler].
