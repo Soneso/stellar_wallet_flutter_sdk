@@ -354,6 +354,17 @@ class Sep6Transaction extends AnchorTransaction {
   /// (optional) Completion date and time of transaction - UTC ISO 8601 string.
   DateTime? completedAt;
 
+  /// (optional) The date and time by when the user action is required.
+  /// In certain statuses, such as pending_user_transfer_start or incomplete,
+  /// anchor waits for the user action and user_action_required_by field should
+  /// be used to show the time anchors gives for the user to make an action
+  /// before transaction will automatically be moved into a different status
+  /// (such as expired or to be refunded). user_action_required_by should
+  /// only be specified for statuses where user action is required,
+  /// and omitted for all other. Anchor should specify the action waited on
+  /// using message or more_info_url.
+  DateTime? userActionRequiredBy;
+
   /// (optional) transaction_id on Stellar network of the transfer that either
   /// completed the deposit or started the withdrawal.
   String? stellarTransactionId;
@@ -424,6 +435,7 @@ class Sep6Transaction extends AnchorTransaction {
       this.startedAt,
       this.updatedAt,
       this.completedAt,
+      this.userActionRequiredBy,
       this.stellarTransactionId,
       this.externalTransactionId,
       this.refunded,
@@ -491,6 +503,9 @@ class Sep6Transaction extends AnchorTransaction {
             : null,
         completedAt: anchorTx.completedAt != null
             ? DateTime.parse(anchorTx.completedAt!)
+            : null,
+        userActionRequiredBy: anchorTx.userActionRequiredBy != null
+            ? DateTime.parse(anchorTx.userActionRequiredBy!)
             : null,
         stellarTransactionId: anchorTx.stellarTransactionId,
         externalTransactionId: anchorTx.externalTransactionId,
@@ -1126,6 +1141,11 @@ class Sep6DepositParams {
   /// (optional) id of the chosen location to drop off cash
   String? locationId;
 
+  /// (optional) can be used to provide extra fields for the request.
+  /// E.g. required fields from the /info endpoint that are not covered by
+  /// the standard parameters.
+  Map<String, String>? extraFields;
+
   Sep6DepositParams(
       {required this.assetCode,
       required this.account,
@@ -1141,7 +1161,8 @@ class Sep6DepositParams {
       this.countryCode,
       this.claimableBalanceSupported,
       this.customerId,
-      this.locationId});
+      this.locationId,
+      this.extraFields});
 
   flutter_sdk.DepositRequest toDepositRequest() {
     return flutter_sdk.DepositRequest(
@@ -1159,7 +1180,8 @@ class Sep6DepositParams {
         countryCode: countryCode,
         claimableBalanceSupported: claimableBalanceSupported,
         customerId: customerId,
-        locationId: locationId);
+        locationId: locationId,
+        extraFields: extraFields);
   }
 }
 
@@ -1262,6 +1284,11 @@ class Sep6DepositExchangeParams {
   /// (optional) id of the chosen location to drop off cash
   String? locationId;
 
+  /// (optional) can be used to provide extra fields for the request.
+  /// E.g. required fields from the /info endpoint that are not covered by
+  /// the standard parameters.
+  Map<String, String>? extraFields;
+
   Sep6DepositExchangeParams(
       {required this.destinationAssetCode,
       required this.sourceAssetId,
@@ -1279,7 +1306,8 @@ class Sep6DepositExchangeParams {
       this.countryCode,
       this.claimableBalanceSupported,
       this.customerId,
-      this.locationId});
+      this.locationId,
+      this.extraFields});
 
   flutter_sdk.DepositExchangeRequest toDepositExchangeRequest() {
     return flutter_sdk.DepositExchangeRequest(
@@ -1299,7 +1327,8 @@ class Sep6DepositExchangeParams {
         countryCode: countryCode,
         claimableBalanceSupported: claimableBalanceSupported,
         customerId: customerId,
-        locationId: locationId);
+        locationId: locationId,
+        extraFields: extraFields);
   }
 }
 
@@ -1398,6 +1427,11 @@ class Sep6WithdrawParams {
   /// (optional) id of the chosen location to pick up cash
   String? locationId;
 
+  /// (optional) can be used to provide extra fields for the request.
+  /// E.g. required fields from the /info endpoint that are not covered by
+  /// the standard parameters.
+  Map<String, String>? extraFields;
+
   Sep6WithdrawParams(
       {required this.assetCode,
       required this.type,
@@ -1415,7 +1449,8 @@ class Sep6WithdrawParams {
       this.refundMemo,
       this.refundMemoType,
       this.customerId,
-      this.locationId});
+      this.locationId,
+      this.extraFields});
 
   flutter_sdk.WithdrawRequest toWithdrawRequest() {
     return flutter_sdk.WithdrawRequest(
@@ -1435,7 +1470,8 @@ class Sep6WithdrawParams {
         refundMemo: refundMemo,
         refundMemoType: refundMemoType?.value,
         customerId: customerId,
-        locationId: locationId);
+        locationId: locationId,
+        extraFields: extraFields);
   }
 }
 
@@ -1558,6 +1594,11 @@ class Sep6WithdrawExchangeParams {
   /// (optional) id of the chosen location to pick up cash
   String? locationId;
 
+  /// (optional) can be used to provide extra fields for the request.
+  /// E.g. required fields from the /info endpoint that are not covered by
+  /// the standard parameters.
+  Map<String, String>? extraFields;
+
   Sep6WithdrawExchangeParams(
       {required this.sourceAssetCode,
       required this.destinationAssetId,
@@ -1578,7 +1619,8 @@ class Sep6WithdrawExchangeParams {
       this.refundMemo,
       this.refundMemoType,
       this.customerId,
-      this.locationId});
+      this.locationId,
+      this.extraFields});
 
   flutter_sdk.WithdrawExchangeRequest toWithdrawExchangeRequest() {
     return flutter_sdk.WithdrawExchangeRequest(
@@ -1601,7 +1643,8 @@ class Sep6WithdrawExchangeParams {
         refundMemo: refundMemo,
         refundMemoType: refundMemoType?.value,
         customerId: customerId,
-        locationId: locationId);
+        locationId: locationId,
+        extraFields: extraFields);
   }
 }
 

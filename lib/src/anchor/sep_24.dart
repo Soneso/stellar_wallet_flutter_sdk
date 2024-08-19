@@ -561,6 +561,7 @@ abstract class ProcessingAnchorTransaction extends Sep24Transaction {
   String? amountFee;
   DateTime? completedAt;
   DateTime? updatedAt;
+  DateTime? userActionRequiredBy;
   String? stellarTransactionId;
   String? externalTransactionId;
   Refunds? refunds;
@@ -580,6 +581,9 @@ abstract class ProcessingAnchorTransaction extends Sep24Transaction {
     }
     if (tx.updatedAt != null) {
       updatedAt = DateTime.parse(tx.updatedAt!);
+    }
+    if (tx.userActionRequiredBy != null) {
+      userActionRequiredBy = DateTime.parse(tx.userActionRequiredBy!);
     }
     stellarTransactionId = tx.stellarTransactionId;
     externalTransactionId = tx.externalTransactionId;
@@ -721,6 +725,8 @@ class ErrorTransaction extends Sep24Transaction {
   String? amountFee;
   String? quoteId;
   DateTime? completedAt;
+  DateTime? updatedAt;
+  DateTime? userActionRequiredBy;
   String? stellarTransactionId;
   String? externalTransactionId;
   bool? refunded;
@@ -758,6 +764,12 @@ class ErrorTransaction extends Sep24Transaction {
     result.quoteId = tx.quoteId;
     if (tx.completedAt != null) {
       result.completedAt = DateTime.parse(tx.completedAt!);
+    }
+    if (tx.updatedAt != null) {
+      result.updatedAt = DateTime.parse(tx.updatedAt!);
+    }
+    if (tx.userActionRequiredBy != null) {
+      result.userActionRequiredBy = DateTime.parse(tx.userActionRequiredBy!);
     }
     result.stellarTransactionId = tx.stellarTransactionId;
     result.externalTransactionId = tx.externalTransactionId;

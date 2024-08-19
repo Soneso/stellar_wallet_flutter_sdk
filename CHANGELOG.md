@@ -1,3 +1,11 @@
+## [0.3.5] - 19.Aug.2024.
+- update to use the new version 1.8.6 of the core flutter sdk
+- SEP-06: allow extra fields to be added in the deposit and withdrawal requests.
+- SEP-06: add the new userActionRequired field to the transaction response object.
+- SEP-06: add fee endpoint.
+- SEP-24: add the new userActionRequired field to the transaction response object.
+- SEP-12: null safety improvements.
+
 ## [0.3.4] - 25.July.2024.
 - update to use the new version 1.8.4 of the core flutter sdk
 - extend sep-12 support: get customer information by different parameters
