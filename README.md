@@ -190,7 +190,31 @@ You can read more about programmatic deposit and withdrawal in the [respective d
 
 ## Docs and Examples
 
-Docmumentation can be found in the [doc](https://github.com/Soneso/stellar_wallet_flutter_sdk/tree/main/doc) folder and on the official Stellar [Build a Wallet with the Wallet SDK](https://developers.stellar.org/docs/category/build-a-wallet-with-the-wallet-sdk) page.
+Documentation can be found in the [doc](https://github.com/Soneso/stellar_wallet_flutter_sdk/tree/main/doc) folder and on the official Stellar [Build a Wallet with the Wallet SDK](https://developers.stellar.org/docs/category/build-a-wallet-with-the-wallet-sdk) page.
 
-Examples can be found in the [test cases](https://github.com/Soneso/stellar_wallet_flutter_sdk/tree/main/test) and in the [example app](https://github.com/Soneso/stellar_wallet_flutter_sdk/tree/main/example).
+Examples can be found in the [test cases](https://github.com/Soneso/stellar_wallet_flutter_sdk/tree/main/test) and in the included [example app](https://github.com/Soneso/stellar_wallet_flutter_sdk/tree/main/example).
+
+## Sample app
+
+[Flutter Basic Pay](https://github.com/Soneso/flutter_basic_pay) is an open source demo app showing how this SDK can be used to implement a Stellar Payment App.
+
+The app has a detailed tutorial and currently offers the following features:
+
+- Signup
+- Log in
+- Encrypting of secret key and secure storage of data
+- Create account
+- Fund account on testnet
+- Fetch account data from the Stellar Network
+- Add and remove asset support
+- Send payments
+- Fetch recent payments
+- Find strict send and strict receive payment paths
+- Send path payments
+- Add and use contacts
+- Add and use your KYC data
+- SEP-06 deposits and withdrawals
+- SEP-24 deposits and withdrawals
+- SEP-06 & SEP-24 transfer history
+
 
