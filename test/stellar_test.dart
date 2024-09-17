@@ -12,7 +12,8 @@ void main() {
 
   test('create account', () async {
     var accountKeyPair = account.createKeyPair();
-    await flutter_sdk.FriendBot.fundTestAccount(accountKeyPair.address);
+    await stellar.fundTestNetAccount(accountKeyPair.address);
+
     var newAccountKeyPair = account.createKeyPair();
 
     var txBuilder = await stellar.transaction(accountKeyPair);
@@ -37,7 +38,7 @@ void main() {
 
   test('lock master key', () async {
     var accountKeyPair = account.createKeyPair();
-    await flutter_sdk.FriendBot.fundTestAccount(accountKeyPair.address);
+    await stellar.fundTestNetAccount(accountKeyPair.address);
 
     var txBuilder = await stellar.transaction(accountKeyPair);
     var tx = txBuilder.lockAccountMasterKey().build();
@@ -57,7 +58,7 @@ void main() {
 
   test('add and remove new signer', () async {
     var accountKeyPair = account.createKeyPair();
-    await flutter_sdk.FriendBot.fundTestAccount(accountKeyPair.address);
+    await stellar.fundTestNetAccount(accountKeyPair.address);
 
     var txBuilder = await stellar.transaction(accountKeyPair);
     var newSignerKeyPair = account.createKeyPair();
@@ -100,7 +101,7 @@ void main() {
 
   test('set threshold', () async {
     var accountKeyPair = account.createKeyPair();
-    await flutter_sdk.FriendBot.fundTestAccount(accountKeyPair.address);
+    await stellar.fundTestNetAccount(accountKeyPair.address);
 
     var txBuilder = await stellar.transaction(accountKeyPair);
     var tx = txBuilder.setThreshold(low: 1, medium: 10, high: 20).build();
@@ -120,7 +121,7 @@ void main() {
 
   test('add and remove asset support', () async {
     var accountKeyPair = account.createKeyPair();
-    await flutter_sdk.FriendBot.fundTestAccount(accountKeyPair.address);
+    await stellar.fundTestNetAccount(accountKeyPair.address);
 
     var asset = IssuedAssetId(
         code: "USDC",
@@ -250,10 +251,10 @@ void main() {
 
   test('sponsoring transactions', () async {
     var sponsorKeyPair = account.createKeyPair();
-    await flutter_sdk.FriendBot.fundTestAccount(sponsorKeyPair.address);
+    await stellar.fundTestNetAccount(sponsorKeyPair.address);
 
     var sponsoredKeyPair = account.createKeyPair();
-    await flutter_sdk.FriendBot.fundTestAccount(sponsoredKeyPair.address);
+    await stellar.fundTestNetAccount(sponsoredKeyPair.address);
 
     var asset = IssuedAssetId(
         code: "USDC",
@@ -287,7 +288,7 @@ void main() {
 
   test('sponsoring account creation', () async {
     var sponsorKeyPair = account.createKeyPair();
-    await flutter_sdk.FriendBot.fundTestAccount(sponsorKeyPair.address);
+    await stellar.fundTestNetAccount(sponsorKeyPair.address);
 
     var newKeyPair = account.createKeyPair();
 
@@ -318,7 +319,7 @@ void main() {
     var replaceWith = account.createKeyPair();
 
     var sponsorKeyPair = account.createKeyPair();
-    await flutter_sdk.FriendBot.fundTestAccount(sponsorKeyPair.address);
+    await stellar.fundTestNetAccount(sponsorKeyPair.address);
 
     var txBuilder = await stellar.transaction(sponsorKeyPair);
     var tx = txBuilder
@@ -369,10 +370,10 @@ void main() {
     var replaceWith = account.createKeyPair();
 
     var sponsorKeyPair = account.createKeyPair();
-    await flutter_sdk.FriendBot.fundTestAccount(sponsorKeyPair.address);
+    await stellar.fundTestNetAccount(sponsorKeyPair.address);
 
     var sponsoredKeyPair = account.createKeyPair();
-    await flutter_sdk.FriendBot.fundTestAccount(sponsoredKeyPair.address);
+    await stellar.fundTestNetAccount(sponsoredKeyPair.address);
 
     var txBuilder = await stellar.transaction(sponsoredKeyPair);
     var transaction = txBuilder
@@ -454,9 +455,9 @@ void main() {
 
   test('submit transaction with fee increase', () async {
     var account1KeyPair = account.createKeyPair();
-    await flutter_sdk.FriendBot.fundTestAccount(account1KeyPair.address);
+    await stellar.fundTestNetAccount(account1KeyPair.address);
     var account2KeyPair = account.createKeyPair();
-    await flutter_sdk.FriendBot.fundTestAccount(account2KeyPair.address);
+    await stellar.fundTestNetAccount(account2KeyPair.address);
 
     // this test is more effective on public net
     // change wallet on top to: var wallet = Wallet.publicNet;
@@ -497,7 +498,7 @@ void main() {
 
   test('test path payments', () async {
     final keyPairA = account.createKeyPair();
-    await flutter_sdk.FriendBot.fundTestAccount(keyPairA.address);
+    await stellar.fundTestNetAccount(keyPairA.address);
     final accountAId = keyPairA.address;
 
     final keyPairB = account.createKeyPair();
@@ -649,16 +650,34 @@ void main() {
     var strictSendTransaction = txBuilder
         .strictSend(
             sendAssetId: iomAsset,
-            sendAmount: "10",
+            sendAmount: "5",
             destinationAddress: accountEId,
             destinationAssetId: moonAsset,
-            destinationMinAmount: "38",
+            destinationMinAmount: "19",
             path: assetsPath)
         .build();
     stellar.sign(strictSendTransaction, keyPairC);
 
     success = await stellar.submitTransaction(strictSendTransaction);
     assert(success);
+
+    // test also "pathPay"
+    txBuilder = await stellar.transaction(keyPairC);
+    var pathPayTransaction = txBuilder
+        .pathPay(destinationAddress: accountEId,
+        sendAsset: iomAsset,
+        destinationAsset: moonAsset,
+        sendAmount: "5",
+        destMin: "19",
+        path: assetsPath)
+        .build();
+    stellar.sign(pathPayTransaction, keyPairC);
+    try {
+      success = await stellar.submitTransaction(pathPayTransaction);
+      assert(success);
+    } on TransactionSubmitFailedException catch(e) {
+      fail('could not send path payment : ${e.response.resultXdr}');
+    }
 
     // check if E received MOON
     var info = await stellar.account().getInfo(accountEId);
@@ -731,5 +750,27 @@ void main() {
     assert(recentPayments.length == 2);
     assert(recentPayments.first is flutter_sdk.PathPaymentStrictReceiveOperationResponse);
     assert(recentPayments.last is flutter_sdk.PathPaymentStrictSendOperationResponse);
+  });
+
+  test('account merge', () async {
+    var sourceKeyPair = account.createKeyPair();
+    var sourceAddress = sourceKeyPair.address;
+    var destinationKeyPair = account.createKeyPair();
+    var destinationAddress = destinationKeyPair.address;
+    await stellar.fundTestNetAccount(sourceAddress);
+    await stellar.fundTestNetAccount(destinationAddress);
+
+    var txBuilder = await stellar.transaction(sourceKeyPair);
+    var tx = txBuilder.accountMerge(destinationAddress: destinationAddress).build();
+    stellar.sign(tx, sourceKeyPair);
+    bool success = await stellar.submitTransaction(tx);
+    assert(success);
+
+    // wait for ledger
+    await Future.delayed(const Duration(seconds: 5));
+
+    // validate
+    var exists = await account.accountExists(sourceAddress);
+    assert(!exists);
   });
 }

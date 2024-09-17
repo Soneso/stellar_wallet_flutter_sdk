@@ -73,6 +73,7 @@ abstract class CommonTxBuilder<T> {
   }
 }
 
+/// Used for building transactions.
 class TxBuilder extends CommonTxBuilder<TxBuilder> {
   TxBuilder(super.sourceAccount);
 
@@ -107,6 +108,21 @@ class TxBuilder extends CommonTxBuilder<TxBuilder> {
     return this;
   }
 
+  /// Merges account into a destination account.
+  /// **Warning**: This operation will give full control of the account to the destination account,
+  /// effectively removing the merged account from the network.
+  /// Params: [destinationAddress] of the stellar account to merge into.
+  /// Optional [sourceAddress] account id of the account that is being merged. If not given then will default to
+  /// the TransactionBuilder source account.
+  TxBuilder accountMerge({required String destinationAddress, String? sourceAddress}) {
+    var op = flutter_sdk.AccountMergeOperationBuilder(
+        destinationAddress)
+        .setSourceAccount(sourceAddress ?? sourceAccount.accountId)
+        .build();
+    sdkBuilder.addOperation(op);
+    return this;
+  }
+
   TxBuilder transfer(
       String destinationAddress, StellarAssetId assetId, String amount) {
     var op = flutter_sdk.PaymentOperationBuilder(
@@ -117,19 +133,93 @@ class TxBuilder extends CommonTxBuilder<TxBuilder> {
     return this;
   }
 
+  /// Creates and adds a path payment operation to the transaction builder.
+  /// Params: The [destinationAddress] to which the payment is sent, the [sendAsset] - asset to be sent.
+  /// The [destinationAsset] the destination will receive. The amount to be sent [sendAmount],
+  /// The [destAmount] to be received by the destination. Must specify either [sendAmount] or
+  /// [destAmount], but not both. [destMin] - the minimum amount of the destination asset to be receive. This is a
+  /// protective measure, it allows you to specify a lower bound for an acceptable conversion. Only used
+  /// if using [sendAmount] (optional, default is ".0000001"). [sendMax] - the maximum amount of the destination
+  /// asset to be sent. This is a protective measure, it allows you to specify an upper bound for an acceptable
+  /// conversion. Only used if using [destAmount] (optional, default is int64 max).
+  /// And optional the payment [path], that can be selected from the result
+  /// of using [Stellar.findStrictSendPathForDestinationAddress] or [Stellar.findStrictSendPathForDestinationAssets] if
+  /// [sendAmount] is given, or [Stellar.findStrictReceivePathForSourceAssets] or [Stellar.findStrictReceivePathForSourceAddress]
+  /// if [destAmount] is given.
+  /// Returns the current instance of the TransactionBuilder for method chaining.
+  TxBuilder pathPay({
+    required String destinationAddress,
+    required StellarAssetId sendAsset,
+    required StellarAssetId destinationAsset,
+    String? sendAmount,
+    String? destAmount,
+    String? destMin,
+    String? sendMax,
+    List<StellarAssetId>? path,
+  }) {
+    if ((sendAmount != null && destAmount != null) ||
+        (sendAmount == null && destAmount == null)) {
+      throw PathPayOnlyOneAmountException();
+    }
+
+    if (sendAmount != null) {
+      return strictSend(
+          sendAssetId: sendAsset,
+          sendAmount: sendAmount,
+          destinationAddress: destinationAddress,
+          destinationAssetId: destinationAsset,
+          destinationMinAmount: destMin,
+          path: path);
+    } else {
+      return strictReceive(
+          sendAssetId: sendAsset,
+          sendMaxAmount: sendMax,
+          destinationAddress: destinationAddress,
+          destinationAssetId: destinationAsset,
+          destinationAmount: destAmount!,
+          path: path);
+    }
+  }
+
+  /// Swap assets using the Stellar network. This swaps using the
+  /// pathPaymentStrictSend operation. Params: The source asset to be sent [fromAsset].
+  /// The destination asset to receive [toAsset]. The [amount] of the source asset to be sent.
+  /// (Optional) The minimum amount of the destination asset to be received [destMin].
+  /// And optional the payment [path], that can be selected from the result
+  /// of using [Stellar.findStrictSendPathForDestinationAddress] or [Stellar.findStrictSendPathForDestinationAssets]
+  /// Returns the current instance of the TransactionBuilder for method chaining.
+  TxBuilder swap({
+    required StellarAssetId fromAsset,
+    required StellarAssetId toAsset,
+    required String amount,
+    String? destMin,
+    List<StellarAssetId>? path,
+  }) {
+    return pathPay(destinationAddress: sourceAccount.accountId,
+        sendAsset: fromAsset, destinationAsset: toAsset,
+        sendAmount: amount, destMin: destMin, path: path);
+  }
+
+  /// Creates and adds a strict send path payment operation to the transaction builder.
+  /// Params: The [sendAssetId] - asset to be sent. The amount to be sent [sendAmount],
+  /// The [destinationAddress] to which the payment is sent, the asset identified by [destinationAssetId] the
+  /// destination will receive. [destinationMinAmount] - the minimum amount of the destination asset to be receive.
+  /// This is a protective measure, it allows you to specify a lower bound for an acceptable conversion
+  /// (optional, default is ".0000001"). And optional the payment [path], that can be selected from the result
+  /// of using [Stellar.findStrictSendPathForDestinationAddress] or [Stellar.findStrictSendPathForDestinationAssets].
   TxBuilder strictSend(
       {required StellarAssetId sendAssetId,
       required String sendAmount,
       required String destinationAddress,
       required StellarAssetId destinationAssetId,
-      required String destinationMinAmount,
+      String? destinationMinAmount,
       List<StellarAssetId>? path}) {
     var opBuilder = flutter_sdk.PathPaymentStrictSendOperationBuilder(
             sendAssetId.toAsset(),
             sendAmount,
             destinationAddress,
             destinationAssetId.toAsset(),
-            destinationMinAmount)
+            destinationMinAmount ?? '0.0000001')
         .setSourceAccount(sourceAccount.accountId);
     if (path != null) {
       List<flutter_sdk.Asset> assetPath =
@@ -143,16 +233,24 @@ class TxBuilder extends CommonTxBuilder<TxBuilder> {
     return this;
   }
 
+  /// Creates and adds a strict receive path payment operation to the transaction builder.
+  /// Params: The [sendAsset] - asset to be sent. The [destinationAddress] to which the payment
+  /// is sent, the asset identified by [destinationAssetId] the destination will receive.
+  /// The [destinationAmount] to be received by the destination.
+  /// Optional [sendMaxAmount] - the maximum amount of the destination asset to be sent.
+  /// This is a protective measure, it allows you to specify an upper bound for an acceptable
+  /// conversion (optional, default is int64 max).  And optional the payment [path], that can be selected from the result
+  /// of using [Stellar.findStrictReceivePathForSourceAssets] or [Stellar.findStrictReceivePathForSourceAddress].
   TxBuilder strictReceive(
       {required StellarAssetId sendAssetId,
-      required String sendMaxAmount,
       required String destinationAddress,
       required StellarAssetId destinationAssetId,
       required String destinationAmount,
+        required String? sendMaxAmount,
       List<StellarAssetId>? path}) {
     var opBuilder = flutter_sdk.PathPaymentStrictReceiveOperationBuilder(
             sendAssetId.toAsset(),
-            sendMaxAmount,
+            sendMaxAmount ?? '922337203685.4775807',
             destinationAddress,
             destinationAssetId.toAsset(),
             destinationAmount)

@@ -70,6 +70,19 @@ class InvalidStartingBalanceException implements ValidationException {
   }
 }
 
+class PathPayOnlyOneAmountException implements ValidationException {
+  @override
+  Exception? cause;
+
+  @override
+  late String message;
+
+  PathPayOnlyOneAmountException() : super() {
+    message =
+    "Must give sendAmount or destAmount value, but not both.";
+  }
+}
+
 class ClientDomainWithMemoException implements ValidationException {
   @override
   Exception? cause;

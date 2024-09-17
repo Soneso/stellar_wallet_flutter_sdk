@@ -7,6 +7,8 @@ import 'dart:math';
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
 import 'package:stellar_wallet_flutter_sdk/stellar_wallet_flutter_sdk.dart';
 
+/// Interaction with the Stellar Network.
+/// Do not create this object directly, use the Wallet class.
 class Stellar {
   /// Configurations.
   Config cfg;
@@ -14,13 +16,13 @@ class Stellar {
   /// Constructor.
   Stellar(this.cfg);
 
-  /// returns the [AccountService]
+  /// Returns an [AccountService] instance for managing Stellar accounts.
   AccountService account() {
     return AccountService(cfg);
   }
 
   /// Submit a [signedTransaction] to the Stellar Network. Returns true if submitted successfully.
-  /// Throws [TransactionSubmitFailedException] when submission fasiled.
+  /// Throws [TransactionSubmitFailedException] when submission failed.
   Future<bool> submitTransaction(
       flutter_sdk.AbstractTransaction signedTransaction) async {
     var sdk = server;
@@ -137,6 +139,10 @@ class Stellar {
     txBuilder = txBuilder.setTimeBounds(timeBounds);
 
     return txBuilder;
+  }
+
+  Future<bool> fundTestNetAccount(String address) async {
+    return await flutter_sdk.FriendBot.fundTestAccount(address);
   }
 
   /// Server (flutter sdk) allowing you to query data from Horizon.
