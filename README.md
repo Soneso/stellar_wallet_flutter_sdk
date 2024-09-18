@@ -14,7 +14,7 @@ utilizes [Flutter Stellar SDK](https://github.com/Soneso/stellar_flutter_sdk) to
 ```
 dependencies:
   stellar_wallet_flutter_sdk: ^0.3.5
-  stellar_flutter_sdk: ^1.8.6
+  stellar_flutter_sdk: ^1.8.7
 ```
 2. Install it (command line or IDE):
 ```

@@ -1,5 +1,7 @@
 @Timeout(Duration(seconds: 400))
 
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
 
@@ -163,13 +165,13 @@ void main() {
     assert(myAccount.balances[0].assetCode != "USDC");
 
     // check recent transactions
-    var recentTransactions = await account.loadRecentTransactions(accountKeyPair.address, limit:2);
+    var recentTransactions =
+        await account.loadRecentTransactions(accountKeyPair.address, limit: 2);
     assert(recentTransactions.length == 2);
     assert(recentTransactions.first.successful);
     assert(recentTransactions.first.operationCount == 1);
     assert(recentTransactions.last.successful);
     assert(recentTransactions.last.operationCount == 1);
-
   });
 
   Future<String> sendTransactionToBackend(String xdrString) async {
@@ -615,8 +617,8 @@ void main() {
 
     // check if we can find the path to send 10 IOM to E, since E does not trust IOM
     // expected IOM->ECO->MOON
-    var paymentPaths =
-        await stellar.findStrictSendPathForDestinationAddress(iomAsset, "10", accountEId);
+    var paymentPaths = await stellar.findStrictSendPathForDestinationAddress(
+        iomAsset, "10", accountEId);
     assert(paymentPaths.length == 1);
     var paymentPath = paymentPaths.first;
 
@@ -630,8 +632,8 @@ void main() {
     assert(assetsPath.length == 1);
     assert(assetsPath.first == ecoAsset);
 
-    paymentPaths =
-    await stellar.findStrictSendPathForDestinationAssets(iomAsset, "10", [moonAsset]);
+    paymentPaths = await stellar
+        .findStrictSendPathForDestinationAssets(iomAsset, "10", [moonAsset]);
     assert(paymentPaths.length == 1);
     paymentPath = paymentPaths.first;
 
@@ -664,18 +666,19 @@ void main() {
     // test also "pathPay"
     txBuilder = await stellar.transaction(keyPairC);
     var pathPayTransaction = txBuilder
-        .pathPay(destinationAddress: accountEId,
-        sendAsset: iomAsset,
-        destinationAsset: moonAsset,
-        sendAmount: "5",
-        destMin: "19",
-        path: assetsPath)
+        .pathPay(
+            destinationAddress: accountEId,
+            sendAsset: iomAsset,
+            destinationAsset: moonAsset,
+            sendAmount: "5",
+            destMin: "19",
+            path: assetsPath)
         .build();
     stellar.sign(pathPayTransaction, keyPairC);
     try {
       success = await stellar.submitTransaction(pathPayTransaction);
       assert(success);
-    } on TransactionSubmitFailedException catch(e) {
+    } on TransactionSubmitFailedException catch (e) {
       fail('could not send path payment : ${e.response.resultXdr}');
     }
 
@@ -746,31 +749,85 @@ void main() {
     assert(moonBalanceOfE == 48.0);
 
     // check recent payments
-    var recentPayments = await account.loadRecentPayments(keyPairC.address, limit:2);
+    var recentPayments =
+        await account.loadRecentPayments(keyPairC.address, limit: 2);
     assert(recentPayments.length == 2);
-    assert(recentPayments.first is flutter_sdk.PathPaymentStrictReceiveOperationResponse);
-    assert(recentPayments.last is flutter_sdk.PathPaymentStrictSendOperationResponse);
+    assert(recentPayments.first
+        is flutter_sdk.PathPaymentStrictReceiveOperationResponse);
+    assert(recentPayments.last
+        is flutter_sdk.PathPaymentStrictSendOperationResponse);
   });
 
   test('account merge', () async {
-    var sourceKeyPair = account.createKeyPair();
-    var sourceAddress = sourceKeyPair.address;
-    var destinationKeyPair = account.createKeyPair();
-    var destinationAddress = destinationKeyPair.address;
-    await stellar.fundTestNetAccount(sourceAddress);
-    await stellar.fundTestNetAccount(destinationAddress);
+    var accountKp = account.createKeyPair();
+    var sourceKp = account.createKeyPair();
+    await stellar.fundTestNetAccount(accountKp.address);
+    await stellar.fundTestNetAccount(sourceKp.address);
 
-    var txBuilder = await stellar.transaction(sourceKeyPair);
-    var tx = txBuilder.accountMerge(destinationAddress: destinationAddress).build();
-    stellar.sign(tx, sourceKeyPair);
-    bool success = await stellar.submitTransaction(tx);
+    var txBuilder = await stellar.transaction(accountKp, baseFee: 1000);
+    var mergeTxn = txBuilder
+        .accountMerge(
+          destinationAddress: accountKp.address,
+          sourceAddress: sourceKp.address,
+        )
+        .build();
+
+    stellar.sign(mergeTxn, accountKp);
+    stellar.sign(mergeTxn, sourceKp);
+    bool success = await stellar.submitTransaction(mergeTxn);
     assert(success);
 
-    // wait for ledger
-    await Future.delayed(const Duration(seconds: 5));
+    // validate
+    var exists = await account.accountExists(sourceKp.address);
+    assert(!exists);
+  });
+
+  test('set memo', () async {
+    var accountKeyPair = account.createKeyPair();
+    await stellar.fundTestNetAccount(accountKeyPair.address);
+
+    var newAccountKeyPair = account.createKeyPair();
+
+    var txBuilder = await stellar.transaction(accountKeyPair);
+
+    txBuilder.createAccount(newAccountKeyPair, startingBalance: "100.1");
+    var memo = flutter_sdk.MemoText("Memo string");
+    var tx = txBuilder.setMemo(memo).build();
+
+    stellar.sign(tx, accountKeyPair);
+    bool success = await stellar.submitTransaction(tx);
+    assert(success);
+  });
+
+  test('fund testnet account', () async {
+    var accountKp = account.createKeyPair();
+    await wallet.stellar().fundTestNetAccount(accountKp.address);
 
     // validate
-    var exists = await account.accountExists(sourceAddress);
-    assert(!exists);
+    var exists = await account.accountExists(accountKp.address);
+    assert(exists);
+  });
+
+  test('add operation', () async {
+    var sourceAccountKeyPair = account.createKeyPair();
+    await stellar.fundTestNetAccount(sourceAccountKeyPair.address);
+
+    var txBuilder = await stellar.transaction(sourceAccountKeyPair);
+
+    var key = "web_auth_domain";
+    var value = "https://testanchor.stellar.org";
+    var valueBytes = Uint8List.fromList(value.codeUnits);
+
+    var manageDataOperation = flutter_sdk.ManageDataOperationBuilder(
+      key,
+      valueBytes,
+    ).build();
+
+    var tx = txBuilder.addOperation(
+      manageDataOperation,
+    ).build();
+    stellar.sign(tx, sourceAccountKeyPair);
+    bool success = await stellar.submitTransaction(tx);
+    assert(success);
   });
 }

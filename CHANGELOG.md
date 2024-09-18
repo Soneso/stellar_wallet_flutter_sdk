@@ -1,3 +1,8 @@
+## [0.3.6] - 18.Sep.2024.
+- extend transaction building by adding: accountMerge, pathPay and swap
+- extend stellar, add fundTestNetAccount
+- update to use the new version 1.8.7 of the base flutter sdk
+
 ## [0.3.5] - 19.Aug.2024.
 - update to use the new version 1.8.6 of the core flutter sdk
 - SEP-06: allow extra fields to be added in the deposit and withdrawal requests.
