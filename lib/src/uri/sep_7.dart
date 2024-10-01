@@ -10,40 +10,21 @@ import 'package:http/http.dart' as http;
 /// Parsing and constructing SEP-0007 Stellar URIs.
 /// [SEP-07](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0007.md).
 abstract class Sep7Base {
-  static const operationTypeTx = 'tx';
-  static const operationTypePay = 'pay';
-  static const callbackParamKey = 'callback';
-  static const networkPassphraseParamKey = 'network_passphrase';
-  static const originDomainParamKey = 'origin_domain';
-  static const signatureParamKey = 'signature';
-  static const msgParamKey = 'msg';
-  static const uriMsgMaxLength = 300;
-
-  Uri uri;
-  late http.Client httpClient;
-  Map<String, String>? httpRequestHeaders;
+  Map<String, String> queryParameters = {};
+  Sep7OperationType operationType;
+  late flutter_sdk.URIScheme uriScheme;
 
   Sep7Base(
-      {required this.uri, http.Client? httpClient, this.httpRequestHeaders}) {
-    this.httpClient = httpClient ?? http.Client();
-  }
-
-  /// Returns a stringfied URL-decoded version of the 'uri' object.
-  @override
-  String toString() {
-    return uri.toString();
+      {required this.operationType,
+      http.Client? httpClient,
+      Map<String, String>? httpRequestHeaders}) {
+    uriScheme = flutter_sdk.URIScheme(
+        httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
   }
 
   /// Returns uri's pathname as the operation type.
   Sep7OperationType getOperationType() {
-    final pathname = uri.path;
-    if (uri.path == operationTypeTx) {
-      return Sep7OperationType.tx;
-    } else if (uri.path == operationTypePay) {
-      return Sep7OperationType.pay;
-    }
-    throw UnsupportedSep7OperationType(
-        "operation type '$pathname' is not supported");
+    return operationType;
   }
 
   /// Returns a URL-decoded version of the uri 'callback' param without
@@ -51,9 +32,10 @@ abstract class Sep7Base {
   /// this callback url, if this value is omitted then the URI handler should
   /// submit it to the network.
   String? getCallback() {
-    var callback = uri.queryParameters.containsKey(callbackParamKey)
-        ? uri.queryParameters[callbackParamKey]
-        : null;
+    var callback =
+        queryParameters.containsKey(flutter_sdk.URIScheme.callbackParameterName)
+            ? queryParameters[flutter_sdk.URIScheme.callbackParameterName]
+            : null;
     if (callback != null && callback.startsWith("url:")) {
       callback = callback.substring(4);
     }
@@ -66,11 +48,12 @@ abstract class Sep7Base {
   /// value is omitted then the URI handler should submit it to the network.
   setCallback(String? callback) {
     if (callback == null) {
-      uri.queryParameters.remove(callbackParamKey);
+      queryParameters.remove(flutter_sdk.URIScheme.callbackParameterName);
     } else if (callback.startsWith("url:")) {
-      uri.queryParameters[callbackParamKey] = callback;
+      queryParameters[flutter_sdk.URIScheme.callbackParameterName] = callback;
     } else {
-      uri.queryParameters[callbackParamKey] = 'url:$callback';
+      queryParameters[flutter_sdk.URIScheme.callbackParameterName] =
+          'url:$callback';
     }
   }
 
@@ -78,7 +61,7 @@ abstract class Sep7Base {
   /// This message should indicate any additional information that the website
   /// or application wants to show the user in her wallet.
   String? getMsg() {
-    return getParam(msgParamKey);
+    return getParam(flutter_sdk.URIScheme.messageParameterName);
   }
 
   /// Sets and URL-encodes the uri 'msg' param, the [msg] param can't
@@ -88,29 +71,31 @@ abstract class Sep7Base {
   /// or application wants to show the user in her wallet.
   setMsg(String? msg) {
     if (msg == null) {
-      uri.queryParameters.remove(msgParamKey);
-    } else if (msg.length > uriMsgMaxLength) {
+      queryParameters.remove(flutter_sdk.URIScheme.messageParameterName);
+    } else if (msg.length > flutter_sdk.URIScheme.messageMaxLength) {
       throw Sep7MsgTooLong(
-          "'msg' should be no longer than $uriMsgMaxLength characters");
+          "'msg' should be no longer than ${flutter_sdk.URIScheme.messageMaxLength} characters");
     } else {
-      uri.queryParameters[msgParamKey] = msg;
+      queryParameters[flutter_sdk.URIScheme.messageParameterName] = msg;
     }
   }
 
   /// Returns uri 'network_passphrase' param as [String], if not present returns
   /// the PUBLIC Network value by default: 'Public Global Stellar Network ; September 2015'.
   String getNetworkPassphrase() {
-    return uri.queryParameters.containsKey(networkPassphraseParamKey)
-        ? uri.queryParameters[networkPassphraseParamKey]!
+    return queryParameters
+            .containsKey(flutter_sdk.URIScheme.networkPassphraseParameterName)
+        ? queryParameters[flutter_sdk.URIScheme.networkPassphraseParameterName]!
         : flutter_sdk.Network.PUBLIC.networkPassphrase;
   }
 
   /// Returns uri 'network_passphrase' param as [flutter_sdk.Network], if not present returns
   /// the PUBLIC Network value [flutter_sdk.Network.PUBLIC]
   flutter_sdk.Network getNetwork() {
-    if (uri.queryParameters.containsKey(networkPassphraseParamKey)) {
-      return flutter_sdk.Network(
-          uri.queryParameters[networkPassphraseParamKey]!);
+    if (queryParameters
+        .containsKey(flutter_sdk.URIScheme.networkPassphraseParameterName)) {
+      return flutter_sdk.Network(queryParameters[
+          flutter_sdk.URIScheme.networkPassphraseParameterName]!);
     }
     return flutter_sdk.Network.PUBLIC;
   }
@@ -120,7 +105,8 @@ abstract class Sep7Base {
   /// Only need to set it if this transaction is for a network other than
   /// the public network.
   setNetworkPassphrase(String? networkPassphrase) {
-    setParam(networkPassphraseParamKey, networkPassphrase);
+    setParam(flutter_sdk.URIScheme.networkPassphraseParameterName,
+        networkPassphrase);
   }
 
   /// Sets the uri 'network_passphrase' param by using the value from the given [network].
@@ -128,38 +114,37 @@ abstract class Sep7Base {
   /// Only need to set it if this transaction is for a network other than
   /// the public network.
   setNetwork(flutter_sdk.Network? network) {
-    setParam(networkPassphraseParamKey, network?.networkPassphrase);
+    setParam(flutter_sdk.URIScheme.networkPassphraseParameterName,
+        network?.networkPassphrase);
   }
 
   /// Returns a URL-decoded version of the uri 'origin_domain' param if any.
   /// This should be a fully qualified domain name that specifies the originating
   /// domain of the URI request.
   String? getOriginDomain() {
-    return getParam(originDomainParamKey);
+    return getParam(flutter_sdk.URIScheme.originDomainParameterName);
   }
 
   /// Sets and URL-encodes the uri 'origin_domain' param.
   /// Deletes the uri 'origin_domain' param if [originDomain] is set as null.
   setOriginDomain(String? originDomain) {
-    setParam(originDomainParamKey, originDomain);
+    setParam(flutter_sdk.URIScheme.originDomainParameterName, originDomain);
   }
 
   /// Sets and URL-encodes a [key] = [value] uri param.
   /// Deletes the uri param if [value] set as null.
   setParam(String key, String? value) {
     if (value == null) {
-      uri.queryParameters.remove(key);
+      queryParameters.remove(key);
     } else {
-      uri.queryParameters[key] = value;
+      queryParameters[key] = value;
     }
   }
 
   ///  Finds the uri param related to the inputted [key], if any, and returns
   /// a URL-decoded version of it. Returns null if [key] param not found.
   String? getParam(String key) {
-    return uri.queryParameters.containsKey(key)
-        ? uri.queryParameters[key]
-        : null;
+    return queryParameters.containsKey(key) ? queryParameters[key] : null;
   }
 
   /// Returns a URL-decoded version of the uri 'signature' param if any.
@@ -169,8 +154,9 @@ abstract class Sep7Base {
   /// origin_domain's stellar.toml file to validate this signature.
   /// If the verification fails, wallets must alert the user.
   String? getSignature() {
-    return uri.queryParameters.containsKey(signatureParamKey)
-        ? uri.queryParameters[signatureParamKey]
+    return queryParameters
+            .containsKey(flutter_sdk.URIScheme.signatureParameterName)
+        ? queryParameters[flutter_sdk.URIScheme.signatureParameterName]
         : null;
   }
 
@@ -181,11 +167,11 @@ abstract class Sep7Base {
   /// This should be the keypair found in the URI_REQUEST_SIGNING_KEY field of the
   /// 'origin_domains' stellar.toml.
   String addSignature(SigningKeyPair keypair) {
-    flutter_sdk.URIScheme uriScheme = flutter_sdk.URIScheme();
     final signedUrl = uriScheme.signURI(toString(), keypair.keyPair);
     final signedUri = Uri.parse(signedUrl);
-    final signature = signedUri.queryParameters[signatureParamKey]!;
-    setParam(signatureParamKey, signature);
+    final signature = signedUri
+        .queryParameters[flutter_sdk.URIScheme.signatureParameterName]!;
+    setParam(flutter_sdk.URIScheme.signatureParameterName, signature);
     return signature;
   }
 
@@ -206,7 +192,8 @@ abstract class Sep7Base {
     flutter_sdk.StellarToml? toml;
     try {
       toml = await flutter_sdk.StellarToml.fromDomain(originDomain,
-          httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
+          httpClient: uriScheme.httpClient,
+          httpRequestHeaders: uriScheme.httpRequestHeaders);
     } on Exception catch (_) {
       return false;
     }
@@ -221,7 +208,6 @@ abstract class Sep7Base {
         flutter_sdk.KeyPair.fromAccountId(uriRequestSigningKey);
     final encodedSignature = Uri.encodeComponent(signature);
     try {
-      flutter_sdk.URIScheme uriScheme = flutter_sdk.URIScheme();
       return uriScheme.verify(
           Uri.encodeFull(toString()), encodedSignature, signerPublicKey);
     } on Exception catch (_) {
@@ -233,4 +219,114 @@ abstract class Sep7Base {
 enum Sep7OperationType {
   tx,
   pay,
+}
+
+class Sep7Tx extends Sep7Base {
+  Sep7Tx({super.httpClient,
+    super.httpRequestHeaders}) :super(operationType:Sep7OperationType.tx);
+
+  /// Sets and URL-encodes the uri [xdr] param.
+  setXdr(String xdr) {
+    setParam(flutter_sdk.URIScheme.xdrParameterName,
+        xdr);
+  }
+
+  /// Returns a URL-decoded version of the uri 'xdr' param if any.
+  String? getXdr() {
+    return getParam(flutter_sdk.URIScheme.xdrParameterName);
+  }
+
+  /// Sets and URL-encodes the uri [pubKey] param.
+  setPubKey(String pubKey) {
+    setParam(flutter_sdk.URIScheme.publicKeyParameterName,
+        pubKey);
+  }
+
+  /// Returns a URL-decoded version of the uri 'pubKey' param if any.
+  String? getPubKey() {
+    return getParam(flutter_sdk.URIScheme.publicKeyParameterName);
+  }
+
+  /// Sets and URL-encodes the uri [chain] param.
+  setChain(String chain) {
+    setParam(flutter_sdk.URIScheme.chainParameterName,
+        chain);
+  }
+
+  /// Returns a URL-decoded version of the uri 'chain' param if any.
+  String? getChain() {
+    return getParam(flutter_sdk.URIScheme.chainParameterName);
+  }
+
+}
+
+class Sep7Pay extends Sep7Base {
+  Sep7Pay({super.httpClient,
+    super.httpRequestHeaders}) :super(operationType: Sep7OperationType.pay);
+
+  /// Sets and URL-encodes the uri [destination] param.
+  setDestination(String destination) {
+    setParam(flutter_sdk.URIScheme.destinationParameterName,
+        destination);
+  }
+
+  /// Returns a URL-decoded version of the uri 'destination' param if any.
+  String? getDestination() {
+    return getParam(flutter_sdk.URIScheme.destinationParameterName);
+  }
+
+  /// Sets and URL-encodes the uri [amount] param.
+  setAmount(String amount) {
+    setParam(flutter_sdk.URIScheme.amountParameterName,
+        amount);
+  }
+
+  /// Returns a URL-decoded version of the uri 'amount' param if any.
+  String? getAmount() {
+    return getParam(flutter_sdk.URIScheme.amountParameterName);
+  }
+
+  /// Sets and URL-encodes the uri [assetCode] param.
+  setAssetCode(String assetCode) {
+    setParam(flutter_sdk.URIScheme.assetCodeParameterName,
+        assetCode);
+  }
+
+  /// Returns a URL-decoded version of the uri 'assetCode' param if any.
+  String? getAssetCode() {
+    return getParam(flutter_sdk.URIScheme.assetCodeParameterName);
+  }
+
+  /// Sets and URL-encodes the uri [assetIssuer] param.
+  setAssetIssuer(String assetIssuer) {
+    setParam(flutter_sdk.URIScheme.assetIssuerParameterName,
+        assetIssuer);
+  }
+
+  /// Returns a URL-decoded version of the uri 'assetIssuer' param if any.
+  String? getAssetIssuer() {
+    return getParam(flutter_sdk.URIScheme.assetIssuerParameterName);
+  }
+
+  /// Sets and URL-encodes the uri [memo] param.
+  setMemo(String memo) {
+    setParam(flutter_sdk.URIScheme.memoCodeParameterName,
+        memo);
+  }
+
+  /// Returns a URL-decoded version of the uri 'memo' param if any.
+  String? getMemo() {
+    return getParam(flutter_sdk.URIScheme.memoCodeParameterName);
+  }
+
+  /// Sets and URL-encodes the uri [memo] param.
+  setMemoType(String memoType) {
+    setParam(flutter_sdk.URIScheme.memoTypeIssuerParameterName,
+        memoType);
+  }
+
+  /// Returns a URL-decoded version of the uri 'memoType' param if any.
+  String? getMemoType() {
+    return getParam(flutter_sdk.URIScheme.memoTypeIssuerParameterName);
+  }
 }
