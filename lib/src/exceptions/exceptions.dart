@@ -681,3 +681,33 @@ class DomainSignerUnexpectedResponseException implements Exception {
     return "Unknown response from Domain signer - code: $code - body:$body";
   }
 }
+
+class Sep7Exception implements WalletException {
+  @override
+  Exception? cause;
+
+  @override
+  String message;
+
+  Sep7Exception(this.message) : super();
+}
+
+class UnsupportedSep7OperationType implements Sep7Exception {
+  UnsupportedSep7OperationType(this.message, {this.cause}) : super();
+
+  @override
+  Exception? cause;
+
+  @override
+  String message;
+}
+
+class Sep7MsgTooLong implements ValidationException {
+  Sep7MsgTooLong(this.message, {this.cause}) : super();
+
+  @override
+  Exception? cause;
+
+  @override
+  String message;
+}
