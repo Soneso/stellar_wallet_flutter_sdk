@@ -66,9 +66,20 @@ You can assign parameters after creating the initial instance using the appropri
 
 ```dart
 final uri = Sep7Pay.forDestination('G...');
+uri.setCallback('https://example.com/callback');
+uri.setMsg('here goes a message');
+uri.setAssetCode('USDC');
+uri.setAssetIssuer('G...');
+uri.setAmount('10');
+uri.toString(); // encodes everything and converts to a uri string
+```
+The last step after building a `Sep7Tx` or `Sep7Pay` is to add a signature to your uri. This will create a payload out of the transaction and sign it with the provided keypair.
+
+```dart
+final uri = Sep7Pay.forDestination('G...');
 uri.setOriginDomain('example.com');
 final keypair = wallet.stellar().account().createKeyPair();
-uri.addSignature(SigningKeyPair.fromSecret(keypair.secretKey));
+uri.addSignature(keypair);
 print(uri.getSignature()); // signed uri payload
 ```
 
