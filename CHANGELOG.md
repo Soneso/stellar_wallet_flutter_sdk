@@ -1,3 +1,7 @@
+## [1.0.0] - 06.Oct.2024.
+- add sep-7 support
+- update to use the new version 1.8.8 of the base flutter sdk
+
 ## [0.3.6] - 18.Sep.2024.
 - extend transaction building by adding: accountMerge, pathPay and swap
 - extend stellar, add fundTestNetAccount

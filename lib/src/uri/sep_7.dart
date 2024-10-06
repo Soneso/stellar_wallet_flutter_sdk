@@ -9,17 +9,118 @@ import 'package:http/http.dart' as http;
 
 /// Parsing and constructing SEP-0007 Stellar URIs.
 /// [SEP-07](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0007.md).
-abstract class Sep7Base {
+abstract class Sep7 {
   Map<String, String> queryParameters = {};
   Sep7OperationType operationType;
   late flutter_sdk.URIScheme uriScheme;
 
-  Sep7Base(
+  static const String memoTypeText = "MEMO_TEXT";
+  static const String memoTypeId = "MEMO_ID";
+  static const String memoTypeHash = "MEMO_HASH";
+  static const String memoTypeReturn = "MEMO_RETURN";
+
+  Sep7(
       {required this.operationType,
       http.Client? httpClient,
       Map<String, String>? httpRequestHeaders}) {
     uriScheme = flutter_sdk.URIScheme(
         httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
+  }
+
+  static Sep7 parseSep7Uri(String uri,
+      {http.Client? httpClient, Map<String, String>? httpRequestHeaders}) {
+    final uriScheme = flutter_sdk.URIScheme(
+        httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
+    final parseResult = uriScheme.tryParseSep7Url(uri);
+    if (parseResult == null) {
+      final validationResult = uriScheme.isValidSep7Url(uri);
+      throw Sep7InvalidUri(validationResult.reason ?? 'invalid sep7 url');
+    }
+    if (parseResult.operationType == flutter_sdk.URIScheme.operationTypeTx) {
+      final result = Sep7Tx(
+          httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
+      result.queryParameters = parseResult.queryParameters;
+      return result;
+    } else if (parseResult.operationType ==
+        flutter_sdk.URIScheme.operationTypePay) {
+      final result = Sep7Pay(
+          httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
+      result.queryParameters = parseResult.queryParameters;
+      return result;
+    } else {
+      throw Sep7UriTypeNotSupported(
+          "Stellar Sep-7 URI operation type '${parseResult.operationType}' is not currently supported");
+    }
+  }
+
+  static IsValidSep7UriResult isValidSep7Uri(String uri) {
+    final uriScheme = flutter_sdk.URIScheme();
+    final validationResult = uriScheme.isValidSep7Url(uri);
+    return IsValidSep7UriResult(
+        result: validationResult.result, reason: validationResult.reason);
+  }
+
+  /// Takes a Sep-7 URL-decoded '[replace]' string param and parses it to a list of
+  /// [Sep7Replacement] objects for easy of use.
+  /// This string identifies the fields to be replaced in the XDR using
+  /// the 'Txrep (SEP-0011)' representation, which should be specified in the format of:
+  /// txrep_tx_field_name_1:reference_identifier_1,txrep_tx_field_name_2:reference_identifier_2;reference_identifier_1:hint_1,reference_identifier_2:hint_2
+  ///
+  /// @see https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0011.md
+  static List<Sep7Replacement> sep7ReplacementsFromString(String replace) {
+    final uriScheme = flutter_sdk.URIScheme();
+    final sdkReplacements = uriScheme.uriSchemeReplacementsFromString(replace);
+    var result = List<Sep7Replacement>.empty(growable: true);
+    for (var item in sdkReplacements) {
+      result
+          .add(Sep7Replacement(id: item.id, path: item.path, hint: item.hint));
+    }
+    return result;
+  }
+
+  /// Takes a list of [Sep7Replacement] objects and parses it to a string that
+  /// could be used as a Sep-7 URI 'replace' param.
+  ///
+  /// This string identifies the fields to be replaced in the XDR using
+  /// the 'Txrep (SEP-0011)' representation, which should be specified in the format of:
+  /// txrep_tx_field_name_1:reference_identifier_1,txrep_tx_field_name_2:reference_identifier_2;reference_identifier_1:hint_1,reference_identifier_2:hint_2
+  ///
+  /// @see https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0011.md
+  static String sep7ReplacementsToString(List<Sep7Replacement> replacements) {
+    final uriScheme = flutter_sdk.URIScheme();
+    var input = List<flutter_sdk.UriSchemeReplacement>.empty(growable: true);
+    for (var item in replacements) {
+      input
+          .add(flutter_sdk.UriSchemeReplacement(item.id, item.path, item.hint));
+    }
+    return uriScheme.uriSchemeReplacementsToString(input);
+  }
+
+  /// Generates the sep7 url.
+  @override
+  String toString() {
+    final path = operationType == Sep7OperationType.tx
+        ? flutter_sdk.URIScheme.operationTypeTx
+        : flutter_sdk.URIScheme.operationTypePay;
+
+    String result = "web+stellar:$path?";
+    for (MapEntry e in queryParameters.entries) {
+      result += "${e.key}=${Uri.encodeComponent(e.value)}&";
+    }
+
+    if (queryParameters.isNotEmpty) {
+      result = result.substring(0, result.length - 1);
+    }
+    return result;
+
+    /*
+    // this is not working because it encodes the blanks to + not %20
+    final uri = Uri(
+        scheme: "web+stellar",
+        pathSegments: [path],
+        queryParameters: queryParameters);
+    return uri.toString();
+    */
   }
 
   /// Returns uri's pathname as the operation type.
@@ -61,7 +162,7 @@ abstract class Sep7Base {
   /// This message should indicate any additional information that the website
   /// or application wants to show the user in her wallet.
   String? getMsg() {
-    return getParam(flutter_sdk.URIScheme.messageParameterName);
+    return _getParam(flutter_sdk.URIScheme.messageParameterName);
   }
 
   /// Sets and URL-encodes the uri 'msg' param, the [msg] param can't
@@ -105,7 +206,7 @@ abstract class Sep7Base {
   /// Only need to set it if this transaction is for a network other than
   /// the public network.
   setNetworkPassphrase(String? networkPassphrase) {
-    setParam(flutter_sdk.URIScheme.networkPassphraseParameterName,
+    _setParam(flutter_sdk.URIScheme.networkPassphraseParameterName,
         networkPassphrase);
   }
 
@@ -114,7 +215,7 @@ abstract class Sep7Base {
   /// Only need to set it if this transaction is for a network other than
   /// the public network.
   setNetwork(flutter_sdk.Network? network) {
-    setParam(flutter_sdk.URIScheme.networkPassphraseParameterName,
+    _setParam(flutter_sdk.URIScheme.networkPassphraseParameterName,
         network?.networkPassphrase);
   }
 
@@ -122,18 +223,18 @@ abstract class Sep7Base {
   /// This should be a fully qualified domain name that specifies the originating
   /// domain of the URI request.
   String? getOriginDomain() {
-    return getParam(flutter_sdk.URIScheme.originDomainParameterName);
+    return _getParam(flutter_sdk.URIScheme.originDomainParameterName);
   }
 
   /// Sets and URL-encodes the uri 'origin_domain' param.
   /// Deletes the uri 'origin_domain' param if [originDomain] is set as null.
   setOriginDomain(String? originDomain) {
-    setParam(flutter_sdk.URIScheme.originDomainParameterName, originDomain);
+    _setParam(flutter_sdk.URIScheme.originDomainParameterName, originDomain);
   }
 
   /// Sets and URL-encodes a [key] = [value] uri param.
   /// Deletes the uri param if [value] set as null.
-  setParam(String key, String? value) {
+  _setParam(String key, String? value) {
     if (value == null) {
       queryParameters.remove(key);
     } else {
@@ -143,7 +244,7 @@ abstract class Sep7Base {
 
   ///  Finds the uri param related to the inputted [key], if any, and returns
   /// a URL-decoded version of it. Returns null if [key] param not found.
-  String? getParam(String key) {
+  String? _getParam(String key) {
     return queryParameters.containsKey(key) ? queryParameters[key] : null;
   }
 
@@ -167,11 +268,11 @@ abstract class Sep7Base {
   /// This should be the keypair found in the URI_REQUEST_SIGNING_KEY field of the
   /// 'origin_domains' stellar.toml.
   String addSignature(SigningKeyPair keypair) {
-    final signedUrl = uriScheme.signURI(toString(), keypair.keyPair);
+    final signedUrl = uriScheme.addSignature(toString(), keypair.keyPair);
     final signedUri = Uri.parse(signedUrl);
     final signature = signedUri
         .queryParameters[flutter_sdk.URIScheme.signatureParameterName]!;
-    setParam(flutter_sdk.URIScheme.signatureParameterName, signature);
+    _setParam(flutter_sdk.URIScheme.signatureParameterName, signature);
     return signature;
   }
 
@@ -181,39 +282,24 @@ abstract class Sep7Base {
   /// fails, or if there is a problem looking up the stellar.toml associated with
   /// the origin_domain.
   Future<bool> verifySignature() async {
-    final originDomain = getOriginDomain();
-    final signature = getSignature();
-
-    // we can fail fast if neither of them are set since we can't verify without both
-    if (originDomain == null || signature == null) {
-      return false;
-    }
-
-    flutter_sdk.StellarToml? toml;
-    try {
-      toml = await flutter_sdk.StellarToml.fromDomain(originDomain,
-          httpClient: uriScheme.httpClient,
-          httpRequestHeaders: uriScheme.httpRequestHeaders);
-    } on Exception catch (_) {
-      return false;
-    }
-
-    final String? uriRequestSigningKey =
-        toml.generalInformation.uriRequestSigningKey;
-    if (uriRequestSigningKey == null) {
-      return false;
-    }
-
-    final signerPublicKey =
-        flutter_sdk.KeyPair.fromAccountId(uriRequestSigningKey);
-    final encodedSignature = Uri.encodeComponent(signature);
-    try {
-      return uriScheme.verify(
-          Uri.encodeFull(toString()), encodedSignature, signerPublicKey);
-    } on Exception catch (_) {
-      return false;
-    }
+    final sep7Url = toString();
+    final validationResult = await uriScheme.isValidSep7SignedUrl(sep7Url);
+    return validationResult.result;
   }
+}
+
+class IsValidSep7UriResult {
+  bool result;
+  String? reason;
+  IsValidSep7UriResult({required this.result, this.reason});
+}
+
+class Sep7Replacement {
+  String id;
+  String path;
+  String hint;
+
+  Sep7Replacement({required this.id, required this.path, required this.hint});
 }
 
 enum Sep7OperationType {
@@ -221,112 +307,161 @@ enum Sep7OperationType {
   pay,
 }
 
-class Sep7Tx extends Sep7Base {
-  Sep7Tx({super.httpClient,
-    super.httpRequestHeaders}) :super(operationType:Sep7OperationType.tx);
+/// The Sep-7 'tx' operation represents a request to sign
+/// a specific XDR TransactionEnvelope.
+class Sep7Tx extends Sep7 {
+  Sep7Tx({super.httpClient, super.httpRequestHeaders})
+      : super(operationType: Sep7OperationType.tx);
+
+  /// Creates a Sep7Tx instance with given [transaction].
+  /// Sets the 'xdr' param as a Stellar TransactionEnvelope in XDR format that
+  /// is base64 encoded and then URL-encoded.
+  static Sep7Tx forTransaction(flutter_sdk.AbstractTransaction transaction,
+      {http.Client? httpClient, Map<String, String>? httpRequestHeaders}) {
+    var sep7tx =
+        Sep7Tx(httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
+    sep7tx.setXdr(transaction.toEnvelopeXdrBase64());
+    return sep7tx;
+  }
 
   /// Sets and URL-encodes the uri [xdr] param.
   setXdr(String xdr) {
-    setParam(flutter_sdk.URIScheme.xdrParameterName,
-        xdr);
+    _setParam(flutter_sdk.URIScheme.xdrParameterName, xdr);
   }
 
   /// Returns a URL-decoded version of the uri 'xdr' param if any.
   String? getXdr() {
-    return getParam(flutter_sdk.URIScheme.xdrParameterName);
+    return _getParam(flutter_sdk.URIScheme.xdrParameterName);
   }
 
   /// Sets and URL-encodes the uri [pubKey] param.
   setPubKey(String pubKey) {
-    setParam(flutter_sdk.URIScheme.publicKeyParameterName,
-        pubKey);
+    _setParam(flutter_sdk.URIScheme.publicKeyParameterName, pubKey);
   }
 
   /// Returns a URL-decoded version of the uri 'pubKey' param if any.
   String? getPubKey() {
-    return getParam(flutter_sdk.URIScheme.publicKeyParameterName);
+    return _getParam(flutter_sdk.URIScheme.publicKeyParameterName);
   }
 
   /// Sets and URL-encodes the uri [chain] param.
   setChain(String chain) {
-    setParam(flutter_sdk.URIScheme.chainParameterName,
-        chain);
+    _setParam(flutter_sdk.URIScheme.chainParameterName, chain);
   }
 
   /// Returns a URL-decoded version of the uri 'chain' param if any.
   String? getChain() {
-    return getParam(flutter_sdk.URIScheme.chainParameterName);
+    return _getParam(flutter_sdk.URIScheme.chainParameterName);
   }
 
+  /// Sets and URL-encodes the uri 'replace' param, which is a list of fields in
+  /// the transaction that needs to be replaced.
+  ///
+  /// Deletes the uri 'replace' param if set as empty array '[]' or 'null'.
+  ///
+  /// This 'replace' param should be a URL-encoded value that identifies the
+  /// fields to be replaced in the XDR using the 'Txrep (SEP-0011)' representation.
+  /// This will be specified in the format of:
+  /// txrep_tx_field_name_1:reference_identifier_1,txrep_tx_field_name_2:reference_identifier_2;reference_identifier_1:hint_1,reference_identifier_2:hint_2
+  ///
+  /// @see https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0011.md
+  setReplacements(List<Sep7Replacement>? replacements) {
+    if (replacements == null || replacements.isEmpty) {
+      _setParam(flutter_sdk.URIScheme.replaceParameterName, null);
+    } else {
+      _setParam(flutter_sdk.URIScheme.replaceParameterName,
+          Sep7.sep7ReplacementsToString(replacements));
+    }
+  }
+
+  /// Gets a list of fields in the transaction that need to be replaced.
+  List<Sep7Replacement>? getReplacements() {
+    final replaceStr = _getParam(flutter_sdk.URIScheme.replaceParameterName);
+    if (replaceStr == null) {
+      return null;
+    }
+    return Sep7.sep7ReplacementsFromString(replaceStr);
+  }
+
+  /// Adds an additional [replacement].
+  addReplacement(Sep7Replacement replacement) {
+    List<Sep7Replacement> replacements =
+        getReplacements() ?? List<Sep7Replacement>.empty(growable: true);
+    replacements.add(replacement);
+    setReplacements(replacements);
+  }
 }
 
-class Sep7Pay extends Sep7Base {
-  Sep7Pay({super.httpClient,
-    super.httpRequestHeaders}) :super(operationType: Sep7OperationType.pay);
+class Sep7Pay extends Sep7 {
+  Sep7Pay({super.httpClient, super.httpRequestHeaders})
+      : super(operationType: Sep7OperationType.pay);
+
+  /// Creates a Sep7Pay instance with given [destination].
+  static Sep7Pay forDestination(String destination,
+      {http.Client? httpClient, Map<String, String>? httpRequestHeaders}) {
+    var sep7pay =
+        Sep7Pay(httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
+    sep7pay.setDestination(destination);
+    return sep7pay;
+  }
 
   /// Sets and URL-encodes the uri [destination] param.
   setDestination(String destination) {
-    setParam(flutter_sdk.URIScheme.destinationParameterName,
-        destination);
+    _setParam(flutter_sdk.URIScheme.destinationParameterName, destination);
   }
 
   /// Returns a URL-decoded version of the uri 'destination' param if any.
   String? getDestination() {
-    return getParam(flutter_sdk.URIScheme.destinationParameterName);
+    return _getParam(flutter_sdk.URIScheme.destinationParameterName);
   }
 
   /// Sets and URL-encodes the uri [amount] param.
   setAmount(String amount) {
-    setParam(flutter_sdk.URIScheme.amountParameterName,
-        amount);
+    _setParam(flutter_sdk.URIScheme.amountParameterName, amount);
   }
 
   /// Returns a URL-decoded version of the uri 'amount' param if any.
   String? getAmount() {
-    return getParam(flutter_sdk.URIScheme.amountParameterName);
+    return _getParam(flutter_sdk.URIScheme.amountParameterName);
   }
 
   /// Sets and URL-encodes the uri [assetCode] param.
   setAssetCode(String assetCode) {
-    setParam(flutter_sdk.URIScheme.assetCodeParameterName,
-        assetCode);
+    _setParam(flutter_sdk.URIScheme.assetCodeParameterName, assetCode);
   }
 
   /// Returns a URL-decoded version of the uri 'assetCode' param if any.
   String? getAssetCode() {
-    return getParam(flutter_sdk.URIScheme.assetCodeParameterName);
+    return _getParam(flutter_sdk.URIScheme.assetCodeParameterName);
   }
 
   /// Sets and URL-encodes the uri [assetIssuer] param.
   setAssetIssuer(String assetIssuer) {
-    setParam(flutter_sdk.URIScheme.assetIssuerParameterName,
-        assetIssuer);
+    _setParam(flutter_sdk.URIScheme.assetIssuerParameterName, assetIssuer);
   }
 
   /// Returns a URL-decoded version of the uri 'assetIssuer' param if any.
   String? getAssetIssuer() {
-    return getParam(flutter_sdk.URIScheme.assetIssuerParameterName);
+    return _getParam(flutter_sdk.URIScheme.assetIssuerParameterName);
   }
 
   /// Sets and URL-encodes the uri [memo] param.
   setMemo(String memo) {
-    setParam(flutter_sdk.URIScheme.memoCodeParameterName,
-        memo);
+    _setParam(flutter_sdk.URIScheme.memoParameterName, memo);
   }
 
   /// Returns a URL-decoded version of the uri 'memo' param if any.
   String? getMemo() {
-    return getParam(flutter_sdk.URIScheme.memoCodeParameterName);
+    return _getParam(flutter_sdk.URIScheme.memoParameterName);
   }
 
   /// Sets and URL-encodes the uri [memo] param.
   setMemoType(String memoType) {
-    setParam(flutter_sdk.URIScheme.memoTypeIssuerParameterName,
-        memoType);
+    _setParam(flutter_sdk.URIScheme.memoTypeParameterName, memoType);
   }
 
   /// Returns a URL-decoded version of the uri 'memoType' param if any.
   String? getMemoType() {
-    return getParam(flutter_sdk.URIScheme.memoTypeIssuerParameterName);
+    return _getParam(flutter_sdk.URIScheme.memoTypeParameterName);
   }
 }

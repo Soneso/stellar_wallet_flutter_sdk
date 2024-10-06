@@ -20,3 +20,4 @@ export 'src/anchor/watcher.dart';
 export 'src/recovery/sep_30.dart';
 export 'src/quote/sep_38.dart';
 export 'src/anchor/sep_6.dart';
+export 'src/uri/sep_7.dart';

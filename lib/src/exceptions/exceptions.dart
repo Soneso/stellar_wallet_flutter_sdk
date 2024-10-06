@@ -711,3 +711,23 @@ class Sep7MsgTooLong implements ValidationException {
   @override
   String message;
 }
+
+class Sep7InvalidUri implements ValidationException {
+  Sep7InvalidUri(this.message, {this.cause}) : super();
+
+  @override
+  Exception? cause;
+
+  @override
+  String message;
+}
+
+class Sep7UriTypeNotSupported implements ValidationException {
+  Sep7UriTypeNotSupported(this.message, {this.cause}) : super();
+
+  @override
+  Exception? cause;
+
+  @override
+  String message;
+}
