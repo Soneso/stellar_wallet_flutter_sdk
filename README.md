@@ -11,12 +11,25 @@ utilizes [Flutter Stellar SDK](https://github.com/Soneso/stellar_flutter_sdk) to
 
 ### From pub.dev
 1. Add the dependency to your pubspec.yaml file:
+
+Latest stable release:
+
 ```
 dependencies:
   stellar_wallet_flutter_sdk: ^1.0.0
   stellar_flutter_sdk: ^1.8.8
 ```
+
+Prepare for Protocol 22 upgrade:
+
+```
+dependencies:
+  stellar_wallet_flutter_sdk: ^1.0.1-beta
+  stellar_flutter_sdk: ^1.0.9-beta
+```
+
 2. Install it (command line or IDE):
+
 ```
 flutter pub get
 ```

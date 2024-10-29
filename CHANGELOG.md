@@ -1,3 +1,6 @@
+## [1.0.1-beta] - 29.Oct.2024.
+- prepare for protocol 22 upgrade
+
 ## [1.0.0] - 06.Oct.2024.
 - add sep-7 support
 - update to use the new version 1.8.8 of the base flutter sdk
