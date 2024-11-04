@@ -22,7 +22,7 @@ const horizonLimitDefault = 10;
 
 /// Wallet SDK main entry point. It provides methods to build wallet applications on the Stellar network.
 class Wallet {
-  static const versionNumber = "1.0.1-beta";
+  static const versionNumber = "1.0.2-beta";
 
   static final Wallet publicNet = Wallet(StellarConfiguration.publicNet);
   static final Wallet testNet = Wallet(StellarConfiguration.testNet);

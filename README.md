@@ -24,8 +24,8 @@ Prepare for Protocol 22 upgrade:
 
 ```
 dependencies:
-  stellar_wallet_flutter_sdk: ^1.0.1-beta
-  stellar_flutter_sdk: ^1.0.9-beta
+  stellar_wallet_flutter_sdk: ^1.0.2-beta
+  stellar_flutter_sdk: ^1.9.1-beta
 ```
 
 2. Install it (command line or IDE):

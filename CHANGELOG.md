@@ -1,3 +1,6 @@
+## [1.0.2-beta] - 04.Nov.2024.
+- support for protocol 22-rc3
+
 ## [1.0.1-beta] - 29.Oct.2024.
 - prepare for protocol 22 upgrade
 
