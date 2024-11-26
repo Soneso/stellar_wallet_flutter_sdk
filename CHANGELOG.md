@@ -1,3 +1,7 @@
+## [1.0.2] - 26.Nov.2024.
+- include the changes from 1.0.2-beta
+- update to use the new version 1.9.1 of the horizon flutter sdk
+
 ## [1.0.2-beta] - 04.Nov.2024.
 - support for protocol 22-rc3
 
