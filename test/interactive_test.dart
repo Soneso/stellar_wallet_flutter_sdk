@@ -327,7 +327,7 @@ void main() {
     AuthToken token = AuthToken(jwtToken);
     Sep24 sep24 = anchor.sep24();
     AnchorTransaction transaction = await sep24.getTransaction(
-        "17a670bc424ff5ce3b386dbfaae9990b66a2a37b4fbe51547e8794962a3f9e6a",
+        "82fhs729f63dh0v4",
         token);
 
     assert("82fhs729f63dh0v4" == transaction.id);
@@ -390,7 +390,7 @@ void main() {
     AuthToken token = AuthToken(jwtToken);
     Sep24 sep24 = anchor.sep24();
     AnchorTransaction transaction = await sep24.getTransactionBy(token,
-        id: "17a670bc424ff5ce3b386dbfaae9990b66a2a37b4fbe51547e8794962a3f9e6a");
+        stellarTransactionId: "17a670bc424ff5ce3b386dbfaae9990b66a2a37b4fbe51547e8794962a3f9e6a");
 
     assert("82fhs729f63dh0v4" == transaction.id);
   });

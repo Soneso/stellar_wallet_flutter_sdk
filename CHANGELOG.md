@@ -1,3 +1,8 @@
+## [1.0.3] - 26.Mai.2025.
+- update to use the new version 2.0.0 of the horizon flutter sdk
+- sep-7: allow null values for different parameters
+- improve tests
+
 ## [1.0.2] - 26.Nov.2024.
 - include the changes from 1.0.2-beta
 - update to use the new version 1.9.1 of the horizon flutter sdk

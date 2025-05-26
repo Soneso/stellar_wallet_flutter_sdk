@@ -35,7 +35,7 @@ dependencies:
   stellar_wallet_flutter_sdk:
     path: ../
 
-  stellar_flutter_sdk: ^1.9.1-beta
+  stellar_flutter_sdk: ^2.0.0
 
   sliver_tools: ^0.2.5
   cupertino_icons: ^1.0.5

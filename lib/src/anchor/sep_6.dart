@@ -351,7 +351,7 @@ class Sep6Transaction extends AnchorTransaction {
   /// (optional) The date and time of transaction reaching the current status.
   DateTime? updatedAt;
 
-  /// (optional) Completion date and time of transaction - UTC ISO 8601 string.
+  /// (optional) Completion date and time of transaction.
   DateTime? completedAt;
 
   /// (optional) The date and time by when the user action is required.

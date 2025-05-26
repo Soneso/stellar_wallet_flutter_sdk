@@ -40,7 +40,6 @@ class TomlInfo {
     result.networkPassphrase = stellarToml.generalInformation.networkPassphrase;
     result.federationServer = stellarToml.generalInformation.federationServer;
     result.authServer = stellarToml.generalInformation.authServer;
-    result.version = stellarToml.generalInformation.version;
     result.transferServer = stellarToml.generalInformation.transferServer;
     result.transferServerSep24 =
         stellarToml.generalInformation.transferServerSep24;
