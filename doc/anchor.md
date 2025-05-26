@@ -126,7 +126,7 @@ that the request is coming from your wallet, belonging to wallet's `client_domai
 ### Client Side
 
 First, let's implement the client side. In this example we will connect to a remote signer that 
-signs transactions on the endpoint `https://demo-wallet-server.stellar.org/sign` for the client `domain demo-wallet-server.stellar.org`.
+signs transactions on the endpoint `https://demo-wallet-server.stellar.org/sign` for the client domain `demo-wallet-server.stellar.org`.
 
 ```dart
 DomainSigner signer = DomainSigner("https://demo-wallet-server.stellar.org/sign");
