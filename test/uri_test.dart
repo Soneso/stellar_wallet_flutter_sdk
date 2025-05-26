@@ -314,11 +314,11 @@ void main() {
     assert(!verificationResult);
 
     var uriString =
-        "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567&memo=skdjfasf&msg=pay%20me%20with%20lumens&origin_domain=someDomain.com";
+        "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567&memo=skdjfasf&memo_type=MEMO_TEXT&msg=pay%20me%20with%20lumens&origin_domain=someDomain.com";
     var parsedSep7 = Sep7.parseSep7Uri(uriString);
     parsedSep7.addSignature(otherSigner);
     const expectedSignature =
-        "juY2Pi1/IubcbIDds2CbnL+Imr7dbpJYMW1nLAesOmyh5v/uTVvJwI06RgCGBtHh5+5DWOhJUlEfOSGXPtqgAA==";
+        "G/OEnKi7yT4VP2ba7pbrhStH131GQKbg8M7lJTCcGWKo80RbTvTc2Dx5BEpN23Z36gNYBc4/wbBEcu66fuR6DQ==";
     assert(expectedSignature == parsedSep7.getSignature());
     uriString = parsedSep7.toString();
     assert(uriString

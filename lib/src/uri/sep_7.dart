@@ -325,7 +325,7 @@ class Sep7Tx extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [xdr] param.
-  setXdr(String xdr) {
+  setXdr(String? xdr) {
     _setParam(flutter_sdk.URIScheme.xdrParameterName, xdr);
   }
 
@@ -335,7 +335,7 @@ class Sep7Tx extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [pubKey] param.
-  setPubKey(String pubKey) {
+  setPubKey(String? pubKey) {
     _setParam(flutter_sdk.URIScheme.publicKeyParameterName, pubKey);
   }
 
@@ -345,7 +345,7 @@ class Sep7Tx extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [chain] param.
-  setChain(String chain) {
+  setChain(String? chain) {
     _setParam(flutter_sdk.URIScheme.chainParameterName, chain);
   }
 
@@ -406,7 +406,7 @@ class Sep7Pay extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [destination] param.
-  setDestination(String destination) {
+  setDestination(String? destination) {
     _setParam(flutter_sdk.URIScheme.destinationParameterName, destination);
   }
 
@@ -416,7 +416,7 @@ class Sep7Pay extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [amount] param.
-  setAmount(String amount) {
+  setAmount(String? amount) {
     _setParam(flutter_sdk.URIScheme.amountParameterName, amount);
   }
 
@@ -426,7 +426,7 @@ class Sep7Pay extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [assetCode] param.
-  setAssetCode(String assetCode) {
+  setAssetCode(String? assetCode) {
     _setParam(flutter_sdk.URIScheme.assetCodeParameterName, assetCode);
   }
 
@@ -436,7 +436,7 @@ class Sep7Pay extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [assetIssuer] param.
-  setAssetIssuer(String assetIssuer) {
+  setAssetIssuer(String? assetIssuer) {
     _setParam(flutter_sdk.URIScheme.assetIssuerParameterName, assetIssuer);
   }
 
@@ -446,7 +446,7 @@ class Sep7Pay extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [memo] param.
-  setMemo(String memo) {
+  setMemo(String? memo) {
     _setParam(flutter_sdk.URIScheme.memoParameterName, memo);
   }
 
@@ -456,7 +456,7 @@ class Sep7Pay extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [memo] param.
-  setMemoType(String memoType) {
+  setMemoType(String? memoType) {
     _setParam(flutter_sdk.URIScheme.memoTypeParameterName, memoType);
   }
 
