@@ -1,3 +1,6 @@
+## [1.0.4] - 19.Jul.2025.
+- update to use the new version 2.1.0 of the horizon flutter sdk (protocol 23 support)
+
 ## [1.0.3] - 26.Mai.2025.
 - update to use the new version 2.0.0 of the horizon flutter sdk
 - sep-7: allow null values for different parameters

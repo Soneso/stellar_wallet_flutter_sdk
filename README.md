@@ -16,8 +16,8 @@ Latest stable release:
 
 ```
 dependencies:
-  stellar_wallet_flutter_sdk: ^1.0.3
-  stellar_flutter_sdk: ^2.0.0
+  stellar_wallet_flutter_sdk: ^1.0.4
+  stellar_flutter_sdk: ^2.1.0
 ```
 
 2. Install it (command line or IDE):
