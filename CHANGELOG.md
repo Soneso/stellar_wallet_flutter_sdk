@@ -1,3 +1,6 @@
+## [1.0.5] - 11.Aug.2025.
+- update to use the new version 2.1.2 of the horizon flutter sdk
+
 ## [1.0.4] - 19.Jul.2025.
 - update to use the new version 2.1.0 of the horizon flutter sdk (protocol 23 support)
 

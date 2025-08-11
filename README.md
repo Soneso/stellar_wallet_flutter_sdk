@@ -16,7 +16,7 @@ Latest stable release:
 
 ```
 dependencies:
-  stellar_wallet_flutter_sdk: ^1.0.4
+  stellar_wallet_flutter_sdk: ^1.0.5
   stellar_flutter_sdk: ^2.1.0
 ```
 
@@ -230,4 +230,5 @@ The app has a detailed tutorial and currently offers the following features:
 - SEP-24 deposits and withdrawals
 - SEP-06 & SEP-24 transfer history
 
-
+## DeepWiki
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Soneso/stellar_wallet_flutter_sdk)
