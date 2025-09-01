@@ -1,3 +1,6 @@
+## [1.0.6] - 01.Sep.2025.
+- update to use the new version 2.1.3 of the horizon flutter sdk
+
 ## [1.0.5] - 11.Aug.2025.
 - update to use the new version 2.1.2 of the horizon flutter sdk
 
