@@ -22,12 +22,12 @@ Future<void> runExample() async {
   print("Basic Authentication with Memo JWT: " + authToken.jwt);
 
   // With client domain signer
-  // client domain signer src: https://replit.com/@crogobete/ClientDomainSigner#main.py
-  const clientDomainSignerUrl = "https://client-domain-signer.replit.app/sign";
-  const clientDomain = "client-domain-signer.replit.app";
+  // Remote signer source code: https://github.com/Soneso/go-server-signer
+  const clientDomainSignerUrl = "https://testsigner.stellargate.com/sign-sep-10";
+  const clientDomain = "testsigner.stellargate.com";
 
   var clientDomainSigner = DomainSigner(clientDomainSignerUrl,
-      requestHeaders: {"Authorization": "Bearer 123456789"});
+      requestHeaders: {"Authorization": "Bearer 7b23fe8428e7fb9b3335ed36c39fb5649d3cd7361af8bf88c2554d62e8ca3017"});
 
   authToken = await sep10.authenticate(userKeyPair,
       clientDomainSigner: clientDomainSigner, clientDomain: clientDomain);

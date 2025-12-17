@@ -175,9 +175,9 @@ void main() {
   });
 
   Future<String> sendTransactionToBackend(String xdrString) async {
-    // server signer src: https://replit.com/@crogobete/ServerSigner#main.py
-    var serverSigner = DomainSigner("https://server-signer.replit.app/sign",
-        requestHeaders: {"Authorization": "Bearer 987654321"});
+    // Remote signer source code: https://github.com/Soneso/go-server-signer
+    var serverSigner = DomainSigner("https://testsigner.stellargate.com/sign-sep-10",
+        requestHeaders: {"Authorization": "Bearer 7b23fe8428e7fb9b3335ed36c39fb5649d3cd7361af8bf88c2554d62e8ca3017"});
     return await serverSigner.signWithDomainAccount(
         transactionXDR: xdrString,
         networkPassPhrase:
@@ -186,7 +186,7 @@ void main() {
 
   test('building advanced transactions', () async {
     var externalKeyPair = PublicKeyPair.fromAccountId(
-        "GBUTDNISXHXBMZE5I4U5INJTY376S5EW2AF4SQA2SWBXUXJY3OIZQHMV");
+        "GBWW7NMWWIKPDEWZZKTTCSUGV2ZMVN23IZ5JFOZ4FWZBNVQNHMU47HOR");
     var newKeyPair = account.createKeyPair();
     var txBuilder = await stellar.transaction(externalKeyPair);
     var createTxn =
@@ -421,7 +421,7 @@ void main() {
 
   test('using XDR to send transaction data', () async {
     var sponsorKeyPair = PublicKeyPair.fromAccountId(
-        "GBUTDNISXHXBMZE5I4U5INJTY376S5EW2AF4SQA2SWBXUXJY3OIZQHMV");
+        "GBWW7NMWWIKPDEWZZKTTCSUGV2ZMVN23IZ5JFOZ4FWZBNVQNHMU47HOR");
     var newKeyPair = account.createKeyPair();
     var txBuilder = await stellar.transaction(sponsorKeyPair);
     var sponsorAccountCreationTx = txBuilder
