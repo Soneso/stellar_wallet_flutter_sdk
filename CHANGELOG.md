@@ -1,3 +1,7 @@
+## [1.1.0] - 04.Feb.2026.
+- add web platform support
+- update to stellar_flutter_sdk 3.0.1
+
 ## [1.0.7] - 12.Sep.2025.
 - update to use the new version 2.1.4 of the horizon flutter sdk
 
