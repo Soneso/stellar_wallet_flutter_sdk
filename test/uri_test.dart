@@ -389,7 +389,7 @@ void main() {
     assert(third.hint == thirdParsed.hint);
   });
 
-  test('test doc', () async {
+  test('test doc', skip: 'Documentation example - requires funded testnet account', () async {
     final sourceAccountKeyPair = PublicKeyPair.fromAccountId(
         "GBMJZO6QSF4UV3XOI5OJIYXEEOP3Q2LENNB44E4O2GGDFR5K6CY4VMLU");
     final destinationAccountKeyPair = PublicKeyPair.fromAccountId(
