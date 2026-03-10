@@ -701,14 +701,15 @@ class RecoverableAccountInfo {
 }
 
 class RecoverableIdentity {
-  RecoveryRole role;
+  RecoveryRole? role;
   bool? authenticated;
 
   RecoverableIdentity(this.role, this.authenticated);
 
   static RecoverableIdentity from(flutter_sdk.SEP30ResponseIdentity response) {
     return RecoverableIdentity(
-        RecoveryRole(response.role), response.authenticated);
+        response.role != null ? RecoveryRole(response.role!) : null,
+        response.authenticated);
   }
 }
 

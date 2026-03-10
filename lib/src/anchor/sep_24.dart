@@ -519,7 +519,7 @@ abstract class Sep24Transaction extends AnchorTransaction {
   /// It can include banking information for users to start deposits,
   /// the status of the transaction, or any other information the user
   /// might need to know about the transaction.
-  String moreInfoUrl;
+  String? moreInfoUrl;
 
   Sep24Transaction(super.id, super.status, this.startedAt, this.moreInfoUrl,
       {super.message});

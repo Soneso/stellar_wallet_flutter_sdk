@@ -1,3 +1,8 @@
+## [1.1.1] - 10.Mar.2026.
+- update to stellar_flutter_sdk 3.0.4
+- SEP-24: make moreInfoUrl nullable
+- SEP-30: make RecoverableIdentity role nullable
+
 ## [1.1.0] - 04.Feb.2026.
 - add web platform support
 - update to stellar_flutter_sdk 3.0.1
