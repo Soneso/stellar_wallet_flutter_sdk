@@ -11,7 +11,7 @@ import 'package:http/http.dart' as http;
 
 /// Abstract class to provide wallet signer methods.
 abstract class WalletSigner {
-  signWithClientAccount(
+  void signWithClientAccount(
       {required flutter_sdk.AbstractTransaction tnx,
       required flutter_sdk.Network network,
       required AccountKeyPair account});
@@ -21,7 +21,7 @@ abstract class WalletSigner {
 
 class DefaultSigner extends WalletSigner {
   @override
-  signWithClientAccount(
+  void signWithClientAccount(
       {required flutter_sdk.AbstractTransaction tnx,
       required flutter_sdk.Network network,
       required AccountKeyPair account}) {

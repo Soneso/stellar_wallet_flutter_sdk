@@ -773,6 +773,7 @@ class ErrorTransaction extends Sep24Transaction {
     }
     result.stellarTransactionId = tx.stellarTransactionId;
     result.externalTransactionId = tx.externalTransactionId;
+    // ignore: deprecated_member_use
     result.refunded = tx.refunded;
     if (tx.refunds != null) {
       result.refunds = Refunds.from(tx.refunds!);

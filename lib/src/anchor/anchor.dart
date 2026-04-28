@@ -157,7 +157,7 @@ class TransactionStatus {
   @override
   toString() => 'TransactionStatus.$_value';
   TransactionStatus(this._value);
-  get value => _value;
+  String get value => _value;
 
   /// There is not yet enough information for this transaction to be initiated. Perhaps the user has
   /// not yet entered necessary info in an interactive flow
@@ -325,7 +325,7 @@ class MemoType {
   @override
   toString() => 'MemoType.$_value';
   MemoType(this._value);
-  get value => _value;
+  String get value => _value;
 
   static const text = MemoType._internal("text");
   static const hash = MemoType._internal("hash");

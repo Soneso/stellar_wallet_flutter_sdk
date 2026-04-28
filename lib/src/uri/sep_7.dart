@@ -147,7 +147,7 @@ abstract class Sep7 {
   /// prefix to it if not yet present. Deletes the uri [callback] param if set as null.
   /// The URI handler should send the signed XDR to this [callback] url, if this
   /// value is omitted then the URI handler should submit it to the network.
-  setCallback(String? callback) {
+  void setCallback(String? callback) {
     if (callback == null) {
       queryParameters.remove(flutter_sdk.URIScheme.callbackParameterName);
     } else if (callback.startsWith("url:")) {
@@ -170,7 +170,7 @@ abstract class Sep7 {
   /// Deletes the uri [msg] param if set as null.
   /// This message should indicate any additional information that the website
   /// or application wants to show the user in her wallet.
-  setMsg(String? msg) {
+  void setMsg(String? msg) {
     if (msg == null) {
       queryParameters.remove(flutter_sdk.URIScheme.messageParameterName);
     } else if (msg.length > flutter_sdk.URIScheme.messageMaxLength) {
@@ -205,7 +205,7 @@ abstract class Sep7 {
   /// Deletes the uri [networkPassphrase] param if set as null.
   /// Only need to set it if this transaction is for a network other than
   /// the public network.
-  setNetworkPassphrase(String? networkPassphrase) {
+  void setNetworkPassphrase(String? networkPassphrase) {
     _setParam(flutter_sdk.URIScheme.networkPassphraseParameterName,
         networkPassphrase);
   }
@@ -214,7 +214,7 @@ abstract class Sep7 {
   /// Deletes the uri 'network_passphrase' param if [network] is set as null.
   /// Only need to set it if this transaction is for a network other than
   /// the public network.
-  setNetwork(flutter_sdk.Network? network) {
+  void setNetwork(flutter_sdk.Network? network) {
     _setParam(flutter_sdk.URIScheme.networkPassphraseParameterName,
         network?.networkPassphrase);
   }
@@ -228,13 +228,13 @@ abstract class Sep7 {
 
   /// Sets and URL-encodes the uri 'origin_domain' param.
   /// Deletes the uri 'origin_domain' param if [originDomain] is set as null.
-  setOriginDomain(String? originDomain) {
+  void setOriginDomain(String? originDomain) {
     _setParam(flutter_sdk.URIScheme.originDomainParameterName, originDomain);
   }
 
   /// Sets and URL-encodes a [key] = [value] uri param.
   /// Deletes the uri param if [value] set as null.
-  _setParam(String key, String? value) {
+  void _setParam(String key, String? value) {
     if (value == null) {
       queryParameters.remove(key);
     } else {
@@ -325,7 +325,7 @@ class Sep7Tx extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [xdr] param.
-  setXdr(String? xdr) {
+  void setXdr(String? xdr) {
     _setParam(flutter_sdk.URIScheme.xdrParameterName, xdr);
   }
 
@@ -335,7 +335,7 @@ class Sep7Tx extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [pubKey] param.
-  setPubKey(String? pubKey) {
+  void setPubKey(String? pubKey) {
     _setParam(flutter_sdk.URIScheme.publicKeyParameterName, pubKey);
   }
 
@@ -345,7 +345,7 @@ class Sep7Tx extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [chain] param.
-  setChain(String? chain) {
+  void setChain(String? chain) {
     _setParam(flutter_sdk.URIScheme.chainParameterName, chain);
   }
 
@@ -365,7 +365,7 @@ class Sep7Tx extends Sep7 {
   /// txrep_tx_field_name_1:reference_identifier_1,txrep_tx_field_name_2:reference_identifier_2;reference_identifier_1:hint_1,reference_identifier_2:hint_2
   ///
   /// @see https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0011.md
-  setReplacements(List<Sep7Replacement>? replacements) {
+  void setReplacements(List<Sep7Replacement>? replacements) {
     if (replacements == null || replacements.isEmpty) {
       _setParam(flutter_sdk.URIScheme.replaceParameterName, null);
     } else {
@@ -384,7 +384,7 @@ class Sep7Tx extends Sep7 {
   }
 
   /// Adds an additional [replacement].
-  addReplacement(Sep7Replacement replacement) {
+  void addReplacement(Sep7Replacement replacement) {
     List<Sep7Replacement> replacements =
         getReplacements() ?? List<Sep7Replacement>.empty(growable: true);
     replacements.add(replacement);
@@ -406,7 +406,7 @@ class Sep7Pay extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [destination] param.
-  setDestination(String? destination) {
+  void setDestination(String? destination) {
     _setParam(flutter_sdk.URIScheme.destinationParameterName, destination);
   }
 
@@ -416,7 +416,7 @@ class Sep7Pay extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [amount] param.
-  setAmount(String? amount) {
+  void setAmount(String? amount) {
     _setParam(flutter_sdk.URIScheme.amountParameterName, amount);
   }
 
@@ -426,7 +426,7 @@ class Sep7Pay extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [assetCode] param.
-  setAssetCode(String? assetCode) {
+  void setAssetCode(String? assetCode) {
     _setParam(flutter_sdk.URIScheme.assetCodeParameterName, assetCode);
   }
 
@@ -436,7 +436,7 @@ class Sep7Pay extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [assetIssuer] param.
-  setAssetIssuer(String? assetIssuer) {
+  void setAssetIssuer(String? assetIssuer) {
     _setParam(flutter_sdk.URIScheme.assetIssuerParameterName, assetIssuer);
   }
 
@@ -446,7 +446,7 @@ class Sep7Pay extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [memo] param.
-  setMemo(String? memo) {
+  void setMemo(String? memo) {
     _setParam(flutter_sdk.URIScheme.memoParameterName, memo);
   }
 
@@ -456,7 +456,7 @@ class Sep7Pay extends Sep7 {
   }
 
   /// Sets and URL-encodes the uri [memo] param.
-  setMemoType(String? memoType) {
+  void setMemoType(String? memoType) {
     _setParam(flutter_sdk.URIScheme.memoTypeParameterName, memoType);
   }
 

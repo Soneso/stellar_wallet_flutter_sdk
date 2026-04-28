@@ -4,6 +4,8 @@
 
 import 'dart:math';
 
+import 'package:logger/logger.dart';
+
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
 import 'package:stellar_wallet_flutter_sdk/stellar_wallet_flutter_sdk.dart';
 
@@ -94,7 +96,7 @@ class Stellar {
       if (e is flutter_sdk.SubmitTransactionTimeoutResponseException) {
         // Transaction has expired, Increasing fee.
         var newFee = min(maxBaseFee, tx.fee + baseFeeIncrease);
-        print("Transaction has expired. Increasing fee to $newFee Stroops.");
+        Logger().d("Transaction has expired. Increasing fee to $newFee Stroops.");
         return await submitWithFeeIncreaseAndSignerFunction(
             sourceAddress: sourceAddress,
             timeout: timeout,
@@ -152,7 +154,7 @@ class Stellar {
   }
 
   /// Signs the transaction with the given keypair. Uses the network from [cfg.stellar.network].
-  sign(flutter_sdk.AbstractTransaction tx, SigningKeyPair keyPair) {
+  void sign(flutter_sdk.AbstractTransaction tx, SigningKeyPair keyPair) {
     tx.sign(keyPair.keyPair, cfg.stellar.network);
   }
 

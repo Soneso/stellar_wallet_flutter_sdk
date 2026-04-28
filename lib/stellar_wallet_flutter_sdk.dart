@@ -2,7 +2,7 @@
 // Use of this source code is governed by a license that can be
 // found in the LICENSE file.
 
-library stellar_wallet_flutter_sdk;
+library;
 
 export 'src/wallet.dart';
 export 'src/toml/stellar_toml.dart';

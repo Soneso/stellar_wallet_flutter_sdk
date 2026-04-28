@@ -8,7 +8,7 @@ import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
 import 'package:stellar_wallet_flutter_sdk/src/exceptions/exceptions.dart';
 
 /// Implements SEP-0038 - Anchor RFQ API.
-/// See <https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0038.md" target="_blank">Anchor RFQ API.</a>
+/// See [Anchor RFQ API](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0038.md).
 class Sep38 {
   AuthToken? token;
   String serviceAddress;

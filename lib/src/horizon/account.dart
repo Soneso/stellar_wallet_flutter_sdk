@@ -42,7 +42,7 @@ class SigningKeyPair extends AccountKeyPair {
     return SigningKeyPair(flutter_sdk.KeyPair.random());
   }
 
-  sign(flutter_sdk.AbstractTransaction transaction,
+  void sign(flutter_sdk.AbstractTransaction transaction,
       flutter_sdk.Network network) {
     transaction.sign(keyPair, network);
   }

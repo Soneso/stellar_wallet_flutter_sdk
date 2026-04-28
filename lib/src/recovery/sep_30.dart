@@ -582,7 +582,7 @@ class RecoveryAccountSigner {
 class RecoveryType {
   final String _value;
   const RecoveryType._internal(this._value);
-  get value => _value;
+  String get value => _value;
   static const stellarAddress = RecoveryType._internal("stellar_address");
   static const phoneNumber = RecoveryType._internal("phone_number");
   static const email = RecoveryType._internal("email");
@@ -634,7 +634,7 @@ class RecoveryAccountIdentity {
 class RecoveryRole {
   final String _value;
   const RecoveryRole._internal(this._value);
-  get value => _value;
+  String get value => _value;
   static const owner = RecoveryRole._internal("owner");
   static const sender = RecoveryRole._internal("sender");
   static const receiver = RecoveryRole._internal("receiver");

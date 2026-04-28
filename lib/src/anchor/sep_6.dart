@@ -628,7 +628,7 @@ class Sep6Pending extends Sep6TransferResponse {
 
   Sep6Pending(this.status, this.moreInfoUrl, this.eta);
 
-  static fromCustomerInformationStatusResponse(
+  static Sep6Pending fromCustomerInformationStatusResponse(
       flutter_sdk.CustomerInformationStatusResponse response) {
     return Sep6Pending(
         response.status ?? 'pending', response.moreInfoUrl, response.eta);
@@ -1193,7 +1193,7 @@ class Sep6DepositExchangeParams {
 
   /// The off-chain asset the Anchor will receive from the user. The value must
   /// match one of the asset values included in a SEP-38
-  /// GET /prices?buy_asset=stellar:<destination_asset>:<asset_issuer> response
+  /// `GET /prices?buy_asset=stellar:<destination_asset>:<asset_issuer>` response
   /// using SEP-38 Asset Identification Format.
   FiatAssetId sourceAssetId;
 
@@ -1483,7 +1483,7 @@ class Sep6WithdrawExchangeParams {
 
   /// The off-chain asset the Anchor will deliver to the user's account.
   /// The value must match one of the asset values included in a SEP-38
-  /// GET /prices?sell_asset=stellar:<source_asset>:<asset_issuer> response
+  /// `GET /prices?sell_asset=stellar:<source_asset>:<asset_issuer>` response
   /// using SEP-38 Asset Identification Format.
   FiatAssetId destinationAssetId;
 

@@ -44,6 +44,7 @@ class Sep12 {
         flutter_sdk.GetCustomerInfoRequest();
 
     request.id = id;
+    // ignore: deprecated_member_use
     request.account = account;
     request.memo = memo;
     request.type = type;
@@ -113,6 +114,7 @@ class Sep12 {
     request.verificationFields = verificationFields;
 
     flutter_sdk.GetCustomerInfoResponse infoResponse =
+        // ignore: deprecated_member_use
         await kycService.putCustomerVerification(request);
     return GetCustomerResponse.from(infoResponse);
   }
@@ -229,7 +231,7 @@ class FieldType {
   @override
   toString() => _value;
   FieldType(this._value);
-  get value => _value;
+  String get value => _value;
 
   static const string = FieldType._internal("string");
   static const binary = FieldType._internal("binary");
@@ -270,7 +272,7 @@ class Sep12Status {
   @override
   toString() => value;
   Sep12Status(this._value);
-  get value => _value;
+  String get value => _value;
 
   static const needsInfo = Sep12Status._internal("NEEDS_INFO");
   static const accepted = Sep12Status._internal("ACCEPTED");

@@ -229,7 +229,7 @@ class InfoCurrency {
     }
   }
 
-  static from(flutter_sdk.Currency currency) {
+  static InfoCurrency from(flutter_sdk.Currency currency) {
     InfoCurrency result = InfoCurrency();
     result.code = currency.code;
     result.issuer = currency.issuer;

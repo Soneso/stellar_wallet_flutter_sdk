@@ -165,12 +165,12 @@ class RetryContext {
 
   RetryContext({this.retries = 0});
 
-  refresh() {
+  void refresh() {
     retries = 0;
     exception = null;
   }
 
-  onError(Exception e) {
+  void onError(Exception e) {
     exception = e;
     retries++;
   }
@@ -224,7 +224,7 @@ class WatcherResult {
   Timer periodicTimer;
   WatcherResult(this.controller, this.periodicTimer);
 
-  close() {
+  void close() {
     if (!controller.isClosed) {
       controller.close();
     }
