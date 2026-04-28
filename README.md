@@ -16,8 +16,8 @@ Latest stable release:
 
 ```
 dependencies:
-  stellar_wallet_flutter_sdk: ^1.1.1
-  stellar_flutter_sdk: ^3.0.4
+  stellar_wallet_flutter_sdk: ^1.1.2
+  stellar_flutter_sdk: ^3.0.5
 ```
 
 The SDK supports Android, iOS, and Web platforms.

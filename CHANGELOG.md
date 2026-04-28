@@ -1,3 +1,8 @@
+## [1.1.2] - 28.Apr.2026.
+- update to stellar_flutter_sdk 3.0.5
+- bump flutter_lints to 6.0
+- clean up lib/ analyzer warnings (explicit return types, doc comments, logger usage)
+
 ## [1.1.1] - 10.Mar.2026.
 - update to stellar_flutter_sdk 3.0.4
 - SEP-24: make moreInfoUrl nullable
