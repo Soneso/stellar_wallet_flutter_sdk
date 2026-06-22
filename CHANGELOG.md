@@ -1,3 +1,6 @@
+## [1.1.3] - 22.Jun.2026.
+- update to stellar_flutter_sdk 3.2.0
+
 ## [1.1.2] - 28.Apr.2026.
 - update to stellar_flutter_sdk 3.0.5
 - bump flutter_lints to 6.0
