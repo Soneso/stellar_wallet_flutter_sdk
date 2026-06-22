@@ -1,5 +1,7 @@
 import 'package:stellar_wallet_flutter_sdk/stellar_wallet_flutter_sdk.dart';
 
+import '../activity_log.dart';
+
 Future<void> runExample() async {
   final wallet = Wallet.testNet;
   const anchorDomain = "testanchor.stellar.org";
@@ -7,7 +9,7 @@ Future<void> runExample() async {
 
   // Get info from the anchor server
   final info = await anchor.getInfo();
-  print("SEP 10 web auth endpoint: ${info.webAuthEndpoint}");
+  logLine("SEP 10 web auth endpoint: ${info.webAuthEndpoint}");
 
   // Prepare a new user account for this example.
   final userKeyPair = wallet.stellar().account().createKeyPair();
@@ -15,11 +17,11 @@ Future<void> runExample() async {
   // Basic Authentication
   final sep10 = await anchor.sep10();
   var authToken = await sep10.authenticate(userKeyPair);
-  print("Basic Authentication JWT: " + authToken.jwt);
+  logLine("Basic Authentication JWT: ${authToken.jwt}");
 
   // With Memo
   authToken = await sep10.authenticate(userKeyPair, memoId: 123);
-  print("Basic Authentication with Memo JWT: " + authToken.jwt);
+  logLine("Basic Authentication with Memo JWT: ${authToken.jwt}");
 
   // With client domain signer
   // Remote signer source code: https://github.com/Soneso/go-server-signer
@@ -31,5 +33,5 @@ Future<void> runExample() async {
 
   authToken = await sep10.authenticate(userKeyPair,
       clientDomainSigner: clientDomainSigner, clientDomain: clientDomain);
-  print("Client Domain Signer JWT: " + authToken.jwt);
+  logLine("Client Domain Signer JWT: ${authToken.jwt}");
 }

@@ -1,5 +1,7 @@
 import 'package:stellar_wallet_flutter_sdk/stellar_wallet_flutter_sdk.dart';
 
+import '../activity_log.dart';
+
 Future<void> runExample() async {
   final wallet = Wallet.testNet;
   final anchor = wallet.anchor("testanchor.stellar.org");
@@ -9,33 +11,33 @@ Future<void> runExample() async {
   // https://testanchor.stellar.org/.well-known/stellar.toml
 
   final info = await anchor.getInfo();
-  print("Accounts: ${info.accounts}");
-  print("Signing key: ${info.signingKey}");
-  print("Network passphrase: ${info.networkPassphrase}");
+  logLine("Accounts: ${info.accounts}");
+  logLine("Signing key: ${info.signingKey}");
+  logLine("Network passphrase: ${info.networkPassphrase}");
 
-  print("_____________________");
-  print("Transfer server (sep-006): ${info.transferServer}");
-  print("Transfer server (sep-024): ${info.transferServerSep24}");
-  print("Webauth endpoint (sep-010): ${info.webAuthEndpoint}");
-  print("KYC server (sep-012): ${info.kycServer}");
-  print("Direct payment server (sep-031): ${info.directPaymentServer}");
-  print("Anchor quote server (sep-038): ${info.anchorQuoteServer}");
+  logLine("_____________________");
+  logLine("Transfer server (sep-006): ${info.transferServer}");
+  logLine("Transfer server (sep-024): ${info.transferServerSep24}");
+  logLine("Webauth endpoint (sep-010): ${info.webAuthEndpoint}");
+  logLine("KYC server (sep-012): ${info.kycServer}");
+  logLine("Direct payment server (sep-031): ${info.directPaymentServer}");
+  logLine("Anchor quote server (sep-038): ${info.anchorQuoteServer}");
 
   final currencies = info.currencies;
   if (currencies != null) {
     for (var currency in currencies) {
-      print("_____________________");
-      print("Currency:  ${currency.code}:${currency.issuer}");
-      print("Description: ${currency.desc}");
-      print("Status:  ${currency.status}");
-      print("Is anchored: ${currency.isAssetAnchored}");
+      logLine("_____________________");
+      logLine("Currency:  ${currency.code}:${currency.issuer}");
+      logLine("Description: ${currency.desc}");
+      logLine("Status:  ${currency.status}");
+      logLine("Is anchored: ${currency.isAssetAnchored}");
     }
   }
 
-  print("_____________________");
-  print("Documentation");
-  print("Organization: ${info.documentation?.orgName}");
-  print("Url: ${info.documentation?.orgUrl}");
-  print("Description: ${info.documentation?.orgDescription}");
-  print("GitHub: ${info.documentation?.orgGithub}");
+  logLine("_____________________");
+  logLine("Documentation");
+  logLine("Organization: ${info.documentation?.orgName}");
+  logLine("Url: ${info.documentation?.orgUrl}");
+  logLine("Description: ${info.documentation?.orgDescription}");
+  logLine("GitHub: ${info.documentation?.orgGithub}");
 }

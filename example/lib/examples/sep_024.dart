@@ -3,14 +3,13 @@ import 'dart:convert';
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
 import 'package:stellar_wallet_flutter_sdk/stellar_wallet_flutter_sdk.dart';
 
-// Setup main account that will fund new (user) accounts. You can get new key pair and fill it with
-// testnet tokens at
-// https://laboratory.stellar.org/#account-creator?network=test
+import '../activity_log.dart';
 
-const myKey =
-    "SCECAI5I6VHSKNI6K2SEO3CZVFI5Y7TFI7UIXB6XZATMCKZ4I2DLULIJ"; // GA7ILFMAZXGHRFBIE4RWXRY3NWOMZOV6RIYVEJUAY2QKHVMQ4RA32C2G
-var myAccount = SigningKeyPair.fromSecret(myKey);
-var USDC = IssuedAssetId(
+// New (user) accounts are created and funded on the testnet via Friendbot,
+// so the example does not depend on a pre-funded account that could be wiped
+// by a testnet reset.
+
+var usdc = IssuedAssetId(
     code: "USDC",
     issuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5");
 const domain = "testanchor.stellar.org";
@@ -25,71 +24,71 @@ Future<void> runExample() async {
 
   // Get info from the anchor server
   final info = await anchor.getInfo();
-  print("SEP 24 server: ${info.transferServerSep24}");
+  logLine("SEP 24 server: ${info.transferServerSep24}");
 
   // Get SEP-24 info
   final servicesInfo = await sep24.getServiceInfo();
   for( String key in servicesInfo.deposit.keys) {
-    print("Deposit asset: $key , "
+    logLine("Deposit asset: $key , "
         "enabled: ${servicesInfo.deposit[key]!.enabled.toString()}, "
         "max amount ${servicesInfo.deposit[key]!.maxAmount.toString()}");
   }
 
-  print("Preparing new user account");
+  logLine("Preparing new user account");
   // Prepare a new user account for this example.
   final userKeyPair = await prepareNewAccount();
 
   // Authorizing
-  print("Authorize user");
+  logLine("Authorize user");
   final sep10 = await anchor.sep10();
   final authToken = await sep10.authenticate(userKeyPair);
 
-  print("Start deposit");
+  logLine("Start deposit");
   await deposit(sep24, authToken, userKeyPair);
 }
 
 Future<void> deposit(
     Sep24 sep24, AuthToken authToken, SigningKeyPair userKeyPair) async {
   // Start interactive deposit
-  var deposit = await sep24.deposit(USDC, authToken,
+  var deposit = await sep24.deposit(usdc, authToken,
       extraFields: {"email_address": "mail@example.com"});
 
   // Request user input
-  print("Additional user info is required for the deposit, please visit:"
+  logLine("Additional user info is required for the deposit, please visit:"
       " ${deposit.url}");
 
-  print("Waiting for tokens...");
+  logLine("Waiting for tokens...");
 
-  var depositWatcher = sep24.watcher().watchAsset(authToken, USDC);
+  var depositWatcher = sep24.watcher().watchAsset(authToken, usdc);
   depositWatcher.controller.stream.listen(
     (event) async {
       if (event is StatusChange) {
-        print("Transaction status changed from ${event.oldStatus ?? "none"} "
+        logLine("Transaction status changed from ${event.oldStatus ?? "none"} "
                 "to ${event.status}. Message: ${event.transaction.message}");
 
         if (TransactionStatus.completed == event.status) {
-          print("Successful deposit");
+          logLine("Successful deposit");
           await withdraw(sep24, authToken, userKeyPair);
         }
       } else if (event is ExceptionHandlerExit) {
-        print("Retries exhausted trying obtain transaction data, giving up.");
+        logLine("Retries exhausted trying obtain transaction data, giving up.");
       } else if (event is StreamControllerClosed) {
-        print("Transaction tracking finished");
+        logLine("Transaction tracking finished");
       }
     },
     onError: (error) {
-      print('Error: $error');
+      logLine('Error: $error');
     },
   );
 }
 
 Future<void> withdraw(
     Sep24 sep24, AuthToken authToken, SigningKeyPair userKeyPair) async {
-  print("Start withdrawal");
-  var withdrawal = await sep24.withdraw(USDC, authToken);
+  logLine("Start withdrawal");
+  var withdrawal = await sep24.withdraw(usdc, authToken);
 
   // Request user input
-  print(
+  logLine(
       "Additional user info is required for the withdrawal, please visit: ${withdrawal.url}");
 
   Watcher watcher = sep24.watcher();
@@ -109,7 +108,7 @@ Future<void> withdraw(
       }
     },
     onError: (error) {
-      print('Error: $error');
+      logLine('Error: $error');
     },
   );
 }
@@ -118,12 +117,12 @@ Future<void> transferWithdrawalTransaction(Sep24 sep24, AuthToken authToken,
     WithdrawalTransaction tx, SigningKeyPair userKeyPair) async {
   var sourceAccount = await sdk.accounts.account(userKeyPair.address);
 
-  print(
+  logLine(
       " make the payment of ${tx.amountIn} to ${tx.withdrawAnchorAccount!} with memo type ${tx.withdrawalMemoType} and memo: ${tx.withdrawalMemo}");
   // make the payment
   final paymentBuilder = flutter_sdk.PaymentOperationBuilder(
     tx.withdrawAnchorAccount!,
-    flutter_sdk.Asset.createNonNativeAsset(USDC.code, USDC.issuer),
+    flutter_sdk.Asset.createNonNativeAsset(usdc.code, usdc.issuer),
     tx.amountIn!,
   );
 
@@ -145,9 +144,9 @@ Future<void> transferWithdrawalTransaction(Sep24 sep24, AuthToken authToken,
       flutter_sdk.KeyPair.fromSecretSeed(userKeyPair.secretKey);
   final transaction = transactionBuilder.build()..sign(kp, network);
   final paymentResult = await sdk.submitTransaction(transaction);
-  print("payment success: " + paymentResult.success.toString());
+  logLine("payment success: ${paymentResult.success}");
 
-  print("Start watching");
+  logLine("Start watching");
 
   Watcher watcher = sep24.watcher();
   WatcherResult result = watcher.watchOneTransaction(authToken, tx.id);
@@ -155,61 +154,46 @@ Future<void> transferWithdrawalTransaction(Sep24 sep24, AuthToken authToken,
   result.controller.stream.listen(
     (event) async {
       if (event is StatusChange) {
-        print(
+        logLine(
             "Transaction status changed from ${event.oldStatus ?? "none"} to ${event.status}. Message: ${event.transaction.message}");
         if (event.status.isTerminal()) {
           if (TransactionStatus.completed != event.status) {
-            print("Transaction was not completed!");
+            logLine("Transaction was not completed!");
           } else {
-            print("Successful withdrawal");
+            logLine("Successful withdrawal");
           }
         }
       } else if (event is StreamControllerClosed) {
-        print("Transaction tracking finished");
+        logLine("Transaction tracking finished");
       }
     },
     onError: (error) {
-      print('Error: $error');
+      logLine('Error: $error');
     },
   );
 }
 
 Future<SigningKeyPair> prepareNewAccount() async {
-  // Generate new (user) account and fund it with 10 XLM from main account
+  final wallet = Wallet.testNet;
+  final stellar = wallet.stellar();
 
-  var newUserKeyPair = flutter_sdk.KeyPair.random();
-  print("New user account id: " + newUserKeyPair.accountId);
-  print("New user seed: " + newUserKeyPair.secretSeed);
+  // Generate a new (user) account and fund it on the testnet via Friendbot.
+  final userKeyPair = stellar.account().createKeyPair();
+  logLine("New user account id: ${userKeyPair.address}");
+  logLine("New user seed: ${userKeyPair.secretKey}");
 
-  final createAccountBuilder =
-      flutter_sdk.CreateAccountOperationBuilder(newUserKeyPair.accountId, "10");
+  final funded = await stellar.fundTestNetAccount(userKeyPair.address);
+  if (!funded) {
+    throw Exception("Could not fund new account ${userKeyPair.address}");
+  }
+  logLine("New account funded via Friendbot");
 
-  var sourceAccount = await sdk.accounts.account(myAccount.address);
+  // Create a trustline so the user account can receive the asset.
+  final txBuilder = await stellar.transaction(userKeyPair);
+  final tx = txBuilder.addAssetSupport(usdc, limit: "200").build();
+  stellar.sign(tx, userKeyPair);
+  await stellar.submitTransaction(tx);
+  logLine("Trustline for ${usdc.code} established");
 
-  var transactionBuilder = flutter_sdk.TransactionBuilder(sourceAccount)
-    ..addOperation(createAccountBuilder.build());
-
-  var tx = transactionBuilder.build()
-    ..sign(flutter_sdk.KeyPair.fromSecretSeed(myKey), network);
-
-  await sdk.submitTransaction(tx);
-
-  // Create a trustline for an asset. This allows user account to receive trusted
-  // the asset.
-
-  final trustlineBuilder = flutter_sdk.ChangeTrustOperationBuilder(
-    flutter_sdk.Asset.createNonNativeAsset(USDC.code, USDC.issuer),
-    "200",
-  );
-
-  sourceAccount = await sdk.accounts.account(newUserKeyPair.accountId);
-
-  transactionBuilder = flutter_sdk.TransactionBuilder(sourceAccount)
-    ..addOperation(trustlineBuilder.build());
-
-  tx = transactionBuilder.build()..sign(newUserKeyPair, network);
-
-  await sdk.submitTransaction(tx);
-
-  return SigningKeyPair(newUserKeyPair);
+  return userKeyPair;
 }
