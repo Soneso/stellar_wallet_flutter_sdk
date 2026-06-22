@@ -70,7 +70,7 @@ class AccountService {
 
   Future<flutter_sdk.AccountResponse> getInfo(String accountAddress) async {
     var horizonUrl = cfg.stellar.horizonUrl;
-    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl);
+    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl, httpClient: cfg.app.defaultClient);
     try {
       return await sdk.accounts.account(accountAddress);
     } catch (e) {
@@ -88,7 +88,7 @@ class AccountService {
 
   Future<bool> accountExists(String accountAddress) async {
     var horizonUrl = cfg.stellar.horizonUrl;
-    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl);
+    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl, httpClient: cfg.app.defaultClient);
     try {
       await sdk.accounts.account(accountAddress);
       return true;
@@ -131,7 +131,7 @@ class AccountService {
 
     // fetch payments from stellar
     var horizonUrl = cfg.stellar.horizonUrl;
-    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl);
+    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl, httpClient: cfg.app.defaultClient);
 
     var loadLimit = pageLimit;
     if (limit <= pageLimit && limit > 0) {
@@ -160,7 +160,7 @@ class AccountService {
 
     // fetch payments from stellar
     var horizonUrl = cfg.stellar.horizonUrl;
-    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl);
+    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl, httpClient: cfg.app.defaultClient);
 
     var loadLimit = pageLimit;
     if (limit <= pageLimit && limit > 0) {

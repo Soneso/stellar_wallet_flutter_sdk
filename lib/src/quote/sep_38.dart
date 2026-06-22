@@ -107,6 +107,7 @@ class Sep38 {
           sellAmount: sellAmount,
           buyAmount: buyAmount,
           sellDeliveryMethod: sellDeliveryMethod,
+          buyDeliveryMethod: buyDeliveryMethod,
           countryCode: countryCode,
           jwtToken: token?.jwt);
 

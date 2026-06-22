@@ -150,7 +150,7 @@ class Stellar {
   /// Server (flutter sdk) allowing you to query data from Horizon.
   flutter_sdk.StellarSDK get server {
     var horizonUrl = cfg.stellar.horizonUrl;
-    return flutter_sdk.StellarSDK(horizonUrl);
+    return flutter_sdk.StellarSDK(horizonUrl, httpClient: cfg.app.defaultClient);
   }
 
   /// Signs the transaction with the given keypair. Uses the network from [cfg.stellar.network].

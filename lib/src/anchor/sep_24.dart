@@ -474,8 +474,8 @@ class AnchorServiceInfo {
 
   AnchorServiceAsset? getDepositServiceAssetFor(StellarAssetId assetId) {
     String assetKey = assetId is IssuedAssetId ? assetId.code : assetId.id;
-    if (withdraw.containsKey(assetKey)) {
-      return withdraw[assetKey];
+    if (deposit.containsKey(assetKey)) {
+      return deposit[assetKey];
     }
     return null;
   }

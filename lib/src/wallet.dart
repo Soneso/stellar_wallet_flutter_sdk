@@ -60,7 +60,8 @@ class Wallet {
   }
 
   Sep7 parseSep7Uri(String uri, {http.Client? httpClient, Map<String, String>? httpRequestHeaders}) {
-    return Sep7.parseSep7Uri(uri);
+    return Sep7.parseSep7Uri(uri,
+        httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
   }
 }
 

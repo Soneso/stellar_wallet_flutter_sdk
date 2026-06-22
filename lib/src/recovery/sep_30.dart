@@ -48,7 +48,7 @@ class AccountRecover extends AbstractAccountRecover {
       Map<RecoveryServerKey, RecoveryServerSigning> serverAuth,
       {AccountKeyPair? lostKey,
       AccountKeyPair? sponsorAddress}) async {
-    var sdk = flutter_sdk.StellarSDK(stellar.horizonUrl);
+    var sdk = flutter_sdk.StellarSDK(stellar.horizonUrl, httpClient: httpClient);
     flutter_sdk.AccountResponse? stellarAccount;
     try {
       stellarAccount = await sdk.accounts.account(account.address);
@@ -375,7 +375,7 @@ class Recovery extends AccountRecover {
       List<AccountSigner> accountSigners,
       AccountThreshold accountThreshold,
       AccountKeyPair? sponsorAddress) async {
-    var sdk = flutter_sdk.StellarSDK(cfg.stellar.horizonUrl);
+    var sdk = flutter_sdk.StellarSDK(cfg.stellar.horizonUrl, httpClient: httpClient);
     flutter_sdk.AccountResponse? acc;
     try {
       acc = await sdk.accounts.account(account.address);

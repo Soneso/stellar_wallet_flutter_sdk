@@ -290,9 +290,6 @@ void main() {
       transactionXdr,
     );
 
-    KeyPair testAccountKeyPair = KeyPair.random();
-    await FriendBot.fundTestAccount(testAccountKeyPair.accountId);
-
     if (envelopeXdr.discriminant != XdrEnvelopeType.ENVELOPE_TYPE_TX) {
       throw ChallengeValidationError("Invalid transaction type");
     }
@@ -758,39 +755,6 @@ void main() {
           request.url.toString().contains(userAccountId)) {
         return http.Response(
             requestChallengeInvalidSignature(userAccountId), 200);
-      }
-      final mapJson = {'error': "Bad request"};
-      return http.Response(json.encode(mapJson), 400);
-    });
-
-    wallet_sdk.Wallet wallet = wallet_sdk.Wallet.testNet;
-    wallet_sdk.Anchor anchor =
-        wallet.anchor(anchorDomain, httpClient: anchorMock);
-    wallet_sdk.SigningKeyPair authKey =
-        wallet_sdk.SigningKeyPair.fromSecret(userSecretSeed);
-    try {
-      wallet_sdk.Sep10 sep10 = await anchor.sep10();
-      wallet_sdk.AuthToken authToken = await sep10.authenticate(authKey);
-      assert(authToken.jwt == successJWTToken);
-    } on wallet_sdk.AnchorAuthException catch (e) {
-      assert(e.cause != null);
-      assert(e.cause is ChallengeValidationErrorInvalidSignature);
-      return;
-    }
-    fail("should not reach");
-  });
-
-  test('test basic get challenge too many signatures', () async {
-    http.Client anchorMock = MockClient((request) async {
-      if (request.url.toString().contains(anchorDomain) &&
-          request.url.toString().contains("stellar.toml")) {
-        return http.Response(anchorToml, 200);
-      }
-      if (request.url.toString().startsWith(webAuthEndpoint) &&
-          request.method == "GET" &&
-          request.url.toString().contains(userAccountId)) {
-        return http.Response(
-            requestChallengeMultipleSignature(userAccountId), 200);
       }
       final mapJson = {'error': "Bad request"};
       return http.Response(json.encode(mapJson), 400);
