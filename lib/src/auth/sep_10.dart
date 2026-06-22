@@ -73,8 +73,23 @@ class AuthToken {
     decodedToken = JwtDecoder.decode(jwt);
   }
 
-  String get issuer => decodedToken["iss"];
-  String get principalAccount => decodedToken["sub"];
+  String get issuer {
+    final value = decodedToken["iss"];
+    if (value is! String) {
+      throw ValidationException(
+          "Auth token JWT is missing the required 'iss' claim");
+    }
+    return value;
+  }
+
+  String get principalAccount {
+    final value = decodedToken["sub"];
+    if (value is! String) {
+      throw ValidationException(
+          "Auth token JWT is missing the required 'sub' claim");
+    }
+    return value;
+  }
   Duration get tokenTime => JwtDecoder.getTokenTime(jwt);
   DateTime get expiresAt => JwtDecoder.getExpirationDate(jwt);
   String? get clientDomain => decodedToken.containsKey("client_domain")

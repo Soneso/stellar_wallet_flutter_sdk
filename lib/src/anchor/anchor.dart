@@ -299,6 +299,9 @@ class TransactionStatus {
     if (error.value == statusString) {
       return error;
     }
+    if (noMarket.value == statusString) {
+      return noMarket;
+    }
 
     return null;
   }

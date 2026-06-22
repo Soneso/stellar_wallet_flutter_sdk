@@ -204,6 +204,13 @@ class Sep6 {
       String? stellarTransactionId,
       String? externalTransactionId,
       String? lang}) async {
+    if (id == null &&
+        stellarTransactionId == null &&
+        externalTransactionId == null) {
+      throw ValidationException(
+          "One of id, stellarTransactionId or externalTransactionId is required.");
+    }
+
     var service = await _transferService();
 
     var request = flutter_sdk.AnchorTransactionRequest();

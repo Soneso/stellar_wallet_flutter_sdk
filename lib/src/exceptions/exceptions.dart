@@ -269,7 +269,7 @@ class TransactionSubmitFailedException implements StellarException {
         operationsResultCodes = null;
       } else {
         String codes = operationsResultCodes!.join(",");
-        message += "Operation result codes: $codes.";
+        message += " Operation result codes: $codes.";
       }
     }
   }
