@@ -99,7 +99,7 @@ var wallet = Wallet(StellarConfiguration.publicNet);
 
 ### Configuring a custom HTTP client
 
-The Flutter Wallet SDK uses the standard Client from the [http package](https://pub.dev/packages/http) for all network requests (excluding Horizon, where the Flutter Stellar SDK's HTTP client is used). 
+The Flutter Wallet SDK uses the standard Client from the [http package](https://pub.dev/packages/http) for all network requests, including Horizon. 
 
 Optionally, you can set your own client from [http package](https://pub.dev/packages/http) to be used across the app.
 

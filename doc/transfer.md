@@ -213,15 +213,17 @@ On the typical flow, the wallet would get transaction data to notify users about
 Let's look into how to use the sdk to track transaction status changes. We will use the `Watcher` class for this purpose. First, let's initialize it and start tracking a transaction.
 
 ```dart
-Watcher watcher = anchor.sep6.watcher();
+Watcher watcher = anchor.sep6().watcher();
 WatcherResult result = watcher.watchOneTransaction(authToken, "transaction id");
 
 result.controller.stream.listen(
   (event) {
     if (event is StatusChange) {
       print("Status changed to ${event.status}. Transaction: ${event.transaction.id}");
+    } else if (event is WatchCompleted) {
+      print("Watched transaction(s) reached a terminal status");
     } else if (event is ExceptionHandlerExit) {
-      print("Exception handler exited the job");
+      print("The exception handler gave up after repeated errors");
     } else if (event is StreamControllerClosed) {
       print("Stream controller closed. Job is done");
     }
@@ -232,15 +234,17 @@ result.controller.stream.listen(
 Alternatively, we can track multiple transactions for the same asset.
 
 ```dart
-Watcher watcher = anchor.sep6.watcher();
+Watcher watcher = anchor.sep6().watcher();
 WatcherResult result = watcher.watchAsset(authToken, asset);
 
 result.controller.stream.listen(
   (event) {
     if (event is StatusChange) {
       print("Status changed to ${event.status}. Transaction: ${event.transaction.id}");
+    } else if (event is WatchCompleted) {
+      print("Watched transaction(s) reached a terminal status");
     } else if (event is ExceptionHandlerExit) {
-      print("Exception handler exited the job");
+      print("The exception handler gave up after repeated errors");
     } else if (event is StreamControllerClosed) {
       print("Stream controller closed. Job is done");
     }

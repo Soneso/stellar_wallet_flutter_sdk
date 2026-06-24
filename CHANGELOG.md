@@ -1,5 +1,19 @@
 ## [1.1.3] - 22.Jun.2026.
 - update to stellar_flutter_sdk 3.2.0
+- watcher: add the WatchCompleted event, emitted when the watched transaction(s) reach a terminal status (behavior change for watcher consumers)
+- watcher: ExceptionHandlerExit now signals only that the retry handler gave up after repeated errors
+- watcher: watchAsset no longer ends on an empty poll
+- a configured ApplicationConfiguration.defaultClient is now also used for Horizon requests
+- SEP-6: fix withdraw extraInfo and deposit maxAmount mapping; getTransactionBy now requires at least one identifier
+- SEP-24: fix deposit asset lookup, which previously consulted the withdraw asset list
+- SEP-38: fix price() not forwarding buyDeliveryMethod
+- SEP-12: fix get() not forwarding lang
+- SEP-7: parseSep7Uri now forwards the http client and request headers; unsupported operation types raise Sep7UriTypeNotSupported
+- AssetId.fromAsset now raises UnsupportedError for liquidity pool share assets
+- TransactionStatus.fromString now maps the no_market status
+- path finding now surfaces request errors instead of returning an empty list
+- loadRecentPayments and loadRecentTransactions now reject a non-positive limit
+- add unit and integration test suites with CI and code coverage reporting
 
 ## [1.1.2] - 28.Apr.2026.
 - update to stellar_flutter_sdk 3.0.5
