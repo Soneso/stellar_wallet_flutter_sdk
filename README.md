@@ -3,6 +3,7 @@
 ![Dart](https://img.shields.io/badge/Dart-green.svg)
 ![Flutter](https://img.shields.io/badge/Flutter-blue.svg)
 [![codecov](https://codecov.io/gh/Soneso/stellar_wallet_flutter_sdk/branch/main/graph/badge.svg)](https://codecov.io/gh/Soneso/stellar_wallet_flutter_sdk)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Soneso/stellar_wallet_flutter_sdk)
 
 
 The Stellar Wallet SDK for Flutter is a library that allows developers to build wallet applications on the Stellar Network faster. It
@@ -232,6 +233,3 @@ The app has a detailed tutorial and currently offers the following features:
 - SEP-06 deposits and withdrawals
 - SEP-24 deposits and withdrawals
 - SEP-06 & SEP-24 transfer history
-
-## DeepWiki
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Soneso/stellar_wallet_flutter_sdk)
