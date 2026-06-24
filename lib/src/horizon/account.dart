@@ -68,9 +68,21 @@ class AccountService {
     return SigningKeyPair.random();
   }
 
+  /// Builds a [flutter_sdk.StellarSDK] for Horizon access, applying the
+  /// configured [ApplicationConfiguration.defaultClient] when one is set.
+  /// The client is applied via the setter because the base SDK constructor's
+  /// httpClient parameter expects a dart:io HttpClient, not a package:http one.
+  flutter_sdk.StellarSDK _sdk() {
+    var sdk = flutter_sdk.StellarSDK(cfg.stellar.horizonUrl);
+    final defaultClient = cfg.app.defaultClient;
+    if (defaultClient != null) {
+      sdk.httpClient = defaultClient;
+    }
+    return sdk;
+  }
+
   Future<flutter_sdk.AccountResponse> getInfo(String accountAddress) async {
-    var horizonUrl = cfg.stellar.horizonUrl;
-    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl, httpClient: cfg.app.defaultClient);
+    flutter_sdk.StellarSDK sdk = _sdk();
     try {
       return await sdk.accounts.account(accountAddress);
     } catch (e) {
@@ -78,7 +90,7 @@ class AccountService {
         if (e.code != 404) {
           throw HorizonRequestFailedException(e);
         } else {
-          throw ValidationException("Account dose not exist");
+          throw ValidationException("Account does not exist");
         }
       } else {
         rethrow;
@@ -87,8 +99,7 @@ class AccountService {
   }
 
   Future<bool> accountExists(String accountAddress) async {
-    var horizonUrl = cfg.stellar.horizonUrl;
-    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl, httpClient: cfg.app.defaultClient);
+    flutter_sdk.StellarSDK sdk = _sdk();
     try {
       await sdk.accounts.account(accountAddress);
       return true;
@@ -125,18 +136,17 @@ class AccountService {
   /// defined by [limit] which defaults to 100.
   Future<List<flutter_sdk.OperationResponse>> loadRecentPayments(String address,
       {int limit = pageLimit}) async {
+    if (limit <= 0) {
+      throw ValidationException("limit must be greater than 0");
+    }
     if (!await accountExists(address)) {
       return [];
     }
 
     // fetch payments from stellar
-    var horizonUrl = cfg.stellar.horizonUrl;
-    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl, httpClient: cfg.app.defaultClient);
+    flutter_sdk.StellarSDK sdk = _sdk();
 
-    var loadLimit = pageLimit;
-    if (limit <= pageLimit && limit > 0) {
-      loadLimit = limit;
-    }
+    var loadLimit = limit > pageLimit ? pageLimit : limit;
 
     // loads the recent payments
     var paymentsPage = await sdk.payments
@@ -154,18 +164,17 @@ class AccountService {
   Future<List<flutter_sdk.TransactionResponse>> loadRecentTransactions(
       String address,
       {int limit = pageLimit}) async {
+    if (limit <= 0) {
+      throw ValidationException("limit must be greater than 0");
+    }
     if (!await accountExists(address)) {
       return [];
     }
 
     // fetch payments from stellar
-    var horizonUrl = cfg.stellar.horizonUrl;
-    flutter_sdk.StellarSDK sdk = flutter_sdk.StellarSDK(horizonUrl, httpClient: cfg.app.defaultClient);
+    flutter_sdk.StellarSDK sdk = _sdk();
 
-    var loadLimit = pageLimit;
-    if (limit <= pageLimit && limit > 0) {
-      loadLimit = limit;
-    }
+    var loadLimit = limit > pageLimit ? pageLimit : limit;
 
     // loads the recent payments (max 100)
     var transactionsPage = await sdk.transactions

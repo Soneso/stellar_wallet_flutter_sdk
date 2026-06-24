@@ -35,6 +35,19 @@ class AccountRecover extends AbstractAccountRecover {
   AccountRecover(this.stellar, this.servers,
       {this.httpClient, this.httpRequestHeaders});
 
+  /// Builds a [flutter_sdk.StellarSDK] for Horizon access, applying the
+  /// configured [httpClient] when one is set. The client is applied via the
+  /// setter because the base SDK constructor's httpClient parameter expects a
+  /// dart:io HttpClient, not a package:http one.
+  flutter_sdk.StellarSDK _horizonSdk() {
+    var sdk = flutter_sdk.StellarSDK(stellar.horizonUrl);
+    final client = httpClient;
+    if (client != null) {
+      sdk.httpClient = client;
+    }
+    return sdk;
+  }
+
   /// Replace lost device key with a new key
   /// @account target account
   /// @newKey a key to replace the lost key with
@@ -48,7 +61,7 @@ class AccountRecover extends AbstractAccountRecover {
       Map<RecoveryServerKey, RecoveryServerSigning> serverAuth,
       {AccountKeyPair? lostKey,
       AccountKeyPair? sponsorAddress}) async {
-    var sdk = flutter_sdk.StellarSDK(stellar.horizonUrl, httpClient: httpClient);
+    var sdk = _horizonSdk();
     flutter_sdk.AccountResponse? stellarAccount;
     try {
       stellarAccount = await sdk.accounts.account(account.address);
@@ -73,7 +86,7 @@ class AccountRecover extends AbstractAccountRecover {
           if (e.code != 404) {
             throw HorizonRequestFailedException(e);
           } else {
-            throw ValidationException("Sponsor account dose not exist");
+            throw ValidationException("Sponsor account does not exist");
           }
         } else {
           rethrow;
@@ -375,7 +388,7 @@ class Recovery extends AccountRecover {
       List<AccountSigner> accountSigners,
       AccountThreshold accountThreshold,
       AccountKeyPair? sponsorAddress) async {
-    var sdk = flutter_sdk.StellarSDK(cfg.stellar.horizonUrl, httpClient: httpClient);
+    var sdk = _horizonSdk();
     flutter_sdk.AccountResponse? acc;
     try {
       acc = await sdk.accounts.account(account.address);
@@ -401,7 +414,7 @@ class Recovery extends AccountRecover {
           if (e.code != 404) {
             throw HorizonRequestFailedException(e);
           } else {
-            throw ValidationException("Sponsor account dose not exist");
+            throw ValidationException("Sponsor account does not exist");
           }
         } else {
           rethrow;
