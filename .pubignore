@@ -1,0 +1,12 @@
+# A .pubignore replaces the root .gitignore for publishing, so the relevant
+# .gitignore exclusions are repeated here, plus the test sources which package
+# consumers do not need.
+test/
+build/
+coverage/
+plans/
+.dart_tool/
+.idea/
+.claude/
+doc/api/
+*.iml

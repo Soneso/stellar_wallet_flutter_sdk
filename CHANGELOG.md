@@ -1,4 +1,4 @@
-## [1.1.3] - 22.Jun.2026.
+## [1.1.3] - 24.Jun.2026.
 - update to stellar_flutter_sdk 3.2.0
 - watcher: add the WatchCompleted event, emitted when the watched transaction(s) reach a terminal status (behavior change for watcher consumers)
 - watcher: ExceptionHandlerExit now signals only that the retry handler gave up after repeated errors
