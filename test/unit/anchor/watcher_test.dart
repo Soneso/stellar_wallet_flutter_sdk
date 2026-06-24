@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -335,4 +336,96 @@ void main() {
       expect(controller.isClosed, isTrue);
     });
   });
+
+  group('Watcher state machine', () {
+    Config cfg() =>
+        Config(StellarConfiguration.testNet, ApplicationConfiguration());
+
+    test('watchAsset keeps waiting when a poll returns no transactions', () {
+      fakeAsync((async) {
+        final anchor = _FakeAnchor(cfg());
+        anchor.fakeSep24 = _FakeSep24(anchor, () async => <Sep24Transaction>[]);
+        final watcher = Watcher(
+            anchor,
+            const Duration(seconds: 1),
+            RetryExceptionHandler()..backoffPeriod = Duration.zero,
+            WatcherKind.sep24);
+
+        final events = <StatusUpdateEvent>[];
+        final result =
+            watcher.watchAsset(AuthToken(_testJwt()), NativeAssetId());
+        result.controller.stream.listen(events.add);
+
+        async.elapse(const Duration(seconds: 5));
+
+        // An empty poll must not end the watch (the transaction may not exist
+        // yet); the watcher keeps polling.
+        expect(events.whereType<WatchCompleted>(), isEmpty);
+        expect(events.whereType<ExceptionHandlerExit>(), isEmpty);
+        expect(result.controller.isClosed, isFalse);
+        result.close();
+      });
+    });
+
+    test('watchAsset emits ExceptionHandlerExit when polling keeps failing',
+        () {
+      fakeAsync((async) {
+        final anchor = _FakeAnchor(cfg());
+        anchor.fakeSep24 =
+            _FakeSep24(anchor, () async => throw Exception('horizon down'));
+        final handler = RetryExceptionHandler()
+          ..maxRetryCount = 2
+          ..backoffPeriod = Duration.zero;
+        final watcher = Watcher(
+            anchor, const Duration(seconds: 1), handler, WatcherKind.sep24);
+
+        final events = <StatusUpdateEvent>[];
+        final result =
+            watcher.watchAsset(AuthToken(_testJwt()), NativeAssetId());
+        result.controller.stream.listen(events.add);
+
+        async.elapse(const Duration(seconds: 5));
+
+        // Repeated failures exhaust the retry handler and end the watch as an
+        // error exit, not a normal completion.
+        expect(events.whereType<ExceptionHandlerExit>(), isNotEmpty);
+        expect(events.whereType<WatchCompleted>(), isEmpty);
+        result.close();
+      });
+    });
+  });
+}
+
+/// Builds an unsigned JWT sufficient for AuthToken construction in tests.
+String _testJwt() {
+  String seg(Map<String, dynamic> m) =>
+      base64Url.encode(utf8.encode(json.encode(m))).replaceAll('=', '');
+  return '${seg({'alg': 'none', 'typ': 'JWT'})}.'
+      '${seg({'sub': 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN', 'exp': 9999999999})}.sig';
+}
+
+/// A [Sep24] whose getTransactionsForAsset is driven by a supplied callback,
+/// so the watcher polling loop can be exercised without any network.
+class _FakeSep24 extends Sep24 {
+  final Future<List<Sep24Transaction>> Function() onGetForAsset;
+  _FakeSep24(Anchor anchor, this.onGetForAsset) : super(anchor);
+
+  @override
+  Future<List<Sep24Transaction>> getTransactionsForAsset(
+          AssetId asset, AuthToken authToken,
+          {DateTime? noOlderThan,
+          int? limit,
+          TransactionKind? kind,
+          String? pagingId,
+          String? lang}) =>
+      onGetForAsset();
+}
+
+/// An [Anchor] that returns a pre-built fake [Sep24], avoiding network access.
+class _FakeAnchor extends Anchor {
+  Sep24? fakeSep24;
+  _FakeAnchor(Config cfg) : super(cfg, 'place.domain.com');
+
+  @override
+  Sep24 sep24() => fakeSep24!;
 }

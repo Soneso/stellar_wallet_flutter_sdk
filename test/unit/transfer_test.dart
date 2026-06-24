@@ -853,7 +853,7 @@ void main() {
 
     bool completed = false;
     bool done = false;
-    bool exceptionHandlerExit = false;
+    bool watchCompleted = false;
     bool streamControllerClosed = false;
     bool error = false;
     result.controller.stream.listen(
@@ -865,8 +865,8 @@ void main() {
             assert(TransactionStatus.completed == event.status);
             completed = true;
           }
-        } else if (event is ExceptionHandlerExit) {
-          exceptionHandlerExit = true;
+        } else if (event is WatchCompleted) {
+          watchCompleted = true;
         } else if (event is StreamControllerClosed) {
           streamControllerClosed = true;
         }
@@ -883,7 +883,7 @@ void main() {
     await Future.delayed(const Duration(seconds: 25), () {});
     assert(completed);
     assert(done);
-    assert(exceptionHandlerExit);
+    assert(watchCompleted);
     assert(streamControllerClosed);
     assert(!error);
   });
@@ -939,7 +939,7 @@ void main() {
 
     bool completed = false;
     bool done = false;
-    bool exceptionHandlerExit = false;
+    bool watchCompleted = false;
     bool streamControllerClosed = false;
     bool error = false;
     result.controller.stream.listen(
@@ -953,8 +953,8 @@ void main() {
               completed = true;
             }
           }
-        } else if (event is ExceptionHandlerExit) {
-          exceptionHandlerExit = true;
+        } else if (event is WatchCompleted) {
+          watchCompleted = true;
         } else if (event is StreamControllerClosed) {
           streamControllerClosed = true;
         }
@@ -971,7 +971,7 @@ void main() {
     await Future.delayed(const Duration(seconds: 30), () {});
     assert(completed);
     assert(done);
-    assert(exceptionHandlerExit);
+    assert(watchCompleted);
     assert(streamControllerClosed);
     assert(!error);
   });

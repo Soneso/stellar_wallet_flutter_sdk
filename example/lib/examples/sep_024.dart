@@ -70,6 +70,8 @@ Future<void> deposit(
           logLine("Successful deposit");
           await withdraw(sep24, authToken, userKeyPair);
         }
+      } else if (event is WatchCompleted) {
+        logLine("Transaction reached a terminal status, watch completed");
       } else if (event is ExceptionHandlerExit) {
         logLine("Retries exhausted trying obtain transaction data, giving up.");
       } else if (event is StreamControllerClosed) {
@@ -163,6 +165,8 @@ Future<void> transferWithdrawalTransaction(Sep24 sep24, AuthToken authToken,
             logLine("Successful withdrawal");
           }
         }
+      } else if (event is WatchCompleted) {
+        logLine("Transaction reached a terminal status, watch completed");
       } else if (event is StreamControllerClosed) {
         logLine("Transaction tracking finished");
       }
