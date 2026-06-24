@@ -9,8 +9,10 @@
 - SEP-38: fix price() not forwarding buyDeliveryMethod
 - SEP-12: fix get() not forwarding lang
 - SEP-7: parseSep7Uri now forwards the http client and request headers; unsupported operation types raise Sep7UriTypeNotSupported
+- SEP-10: AuthToken now raises a ValidationException for a JWT missing the iss or sub claim instead of a raw type error
 - AssetId.fromAsset now raises UnsupportedError for liquidity pool share assets
 - TransactionStatus.fromString now maps the no_market status
+- fix the TransactionSubmitFailedException message to separate the operation result codes
 - path finding now surfaces request errors instead of returning an empty list
 - loadRecentPayments and loadRecentTransactions now reject a non-positive limit
 - add unit and integration test suites with CI and code coverage reporting
