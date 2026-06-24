@@ -32,16 +32,21 @@ class AccountRecover extends AbstractAccountRecover {
   http.Client? httpClient;
   Map<String, String>? httpRequestHeaders;
 
-  AccountRecover(this.stellar, this.servers,
-      {this.httpClient, this.httpRequestHeaders});
+  /// HTTP client used for Horizon access. Distinct from [httpClient] (which is
+  /// used for the recovery servers and TOML fetches) so callers can mock the
+  /// recovery servers while still reaching the real Horizon, or vice versa.
+  http.Client? horizonHttpClient;
 
-  /// Builds a [flutter_sdk.StellarSDK] for Horizon access, applying the
-  /// configured [httpClient] when one is set. The client is applied via the
-  /// setter because the base SDK constructor's httpClient parameter expects a
-  /// dart:io HttpClient, not a package:http one.
+  AccountRecover(this.stellar, this.servers,
+      {this.httpClient, this.httpRequestHeaders, this.horizonHttpClient});
+
+  /// Builds a [flutter_sdk.StellarSDK] for Horizon access, applying
+  /// [horizonHttpClient] when set. The client is applied via the setter because
+  /// the base SDK constructor's httpClient parameter expects a dart:io
+  /// HttpClient, not a package:http one.
   flutter_sdk.StellarSDK _horizonSdk() {
     var sdk = flutter_sdk.StellarSDK(stellar.horizonUrl);
-    final client = httpClient;
+    final client = horizonHttpClient;
     if (client != null) {
       sdk.httpClient = client;
     }
@@ -275,7 +280,8 @@ class Recovery extends AccountRecover {
       : super(cfg.stellar, servers,
             httpClient: httpClient ?? cfg.app.defaultClient,
             httpRequestHeaders:
-                httpRequestHeaders ?? cfg.app.defaultHttpRequestHeaders);
+                httpRequestHeaders ?? cfg.app.defaultHttpRequestHeaders,
+            horizonHttpClient: cfg.app.defaultClient);
 
   /// Create new Sep10 object to authenticate account with the recovery server using SEP-10.
   Future<Sep10> sep10Auth(RecoveryServerKey key) async {
