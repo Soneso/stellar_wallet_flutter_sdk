@@ -33,6 +33,13 @@ abstract class Sep7 {
         httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
     final parseResult = uriScheme.tryParseSep7Url(uri);
     if (parseResult == null) {
+      final opType = _operationTypeFromUri(uri);
+      if (opType != null &&
+          opType != flutter_sdk.URIScheme.operationTypeTx &&
+          opType != flutter_sdk.URIScheme.operationTypePay) {
+        throw Sep7UriTypeNotSupported(
+            "Stellar Sep-7 URI operation type '$opType' is not currently supported");
+      }
       final validationResult = uriScheme.isValidSep7Url(uri);
       throw Sep7InvalidUri(validationResult.reason ?? 'invalid sep7 url');
     }
@@ -51,6 +58,20 @@ abstract class Sep7 {
       throw Sep7UriTypeNotSupported(
           "Stellar Sep-7 URI operation type '${parseResult.operationType}' is not currently supported");
     }
+  }
+
+  /// Extracts the SEP-7 operation type (e.g. 'tx' or 'pay') from a [uri]
+  /// that uses the web+stellar scheme, or null if [uri] is not a web+stellar
+  /// URI or carries no operation segment.
+  static String? _operationTypeFromUri(String uri) {
+    const scheme = flutter_sdk.URIScheme.uriSchemeName;
+    if (!uri.startsWith(scheme)) {
+      return null;
+    }
+    final rest = uri.substring(scheme.length);
+    final queryIndex = rest.indexOf('?');
+    final op = queryIndex >= 0 ? rest.substring(0, queryIndex) : rest;
+    return op.isEmpty ? null : op;
   }
 
   static IsValidSep7UriResult isValidSep7Uri(String uri) {

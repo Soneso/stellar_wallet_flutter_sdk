@@ -32,6 +32,7 @@ class Watcher {
     final periodicTimer = Timer.periodic(
       pollDelay,
       (timer) async {
+        bool exitDueToError = false;
         try {
           AnchorTransaction transaction = watcherKind == WatcherKind.sep6
               ? await anchor
@@ -58,17 +59,21 @@ class Watcher {
           try {
             retryContext.onError(e);
             shouldExit = await exceptionHandler.invoke(retryContext);
+            exitDueToError = shouldExit;
           } catch (e1) {
             shouldExit = true;
+            exitDueToError = true;
             logger.d("CRITICAL: Couldn't invoke exception handler");
           }
         } catch (e) {
           shouldExit = true;
+          exitDueToError = true;
           logger.d("CRITICAL: Unknown error occurred: $e");
         }
         if (shouldExit) {
           timer.cancel();
-          controller.sink.add(ExceptionHandlerExit());
+          controller.sink.add(
+              exitDueToError ? ExceptionHandlerExit() : WatchCompleted());
           controller.sink.add(StreamControllerClosed());
           controller.close();
         }
@@ -89,7 +94,7 @@ class Watcher {
     final periodicTimer = Timer.periodic(
       pollDelay,
       (timer) async {
-        // Update user about remaining time
+        bool exitDueToError = false;
         try {
           List<AnchorTransaction> txList = watcherKind == WatcherKind.sep6
               ? await anchor.sep6().getTransactionsForAsset(
@@ -128,7 +133,10 @@ class Watcher {
           });
           transactionStatuses = transactions;
 
-          if (!hasUnfinishedTransactions) {
+          // Complete only once at least one transaction has been seen and all
+          // seen transactions are terminal. An empty poll (e.g. before the
+          // transaction has been created) must not end the watch.
+          if (transactions.isNotEmpty && !hasUnfinishedTransactions) {
             shouldExit = true;
           }
 
@@ -137,18 +145,22 @@ class Watcher {
           try {
             retryContext.onError(e);
             shouldExit = await exceptionHandler.invoke(retryContext);
+            exitDueToError = shouldExit;
           } catch (err) {
             shouldExit = true;
+            exitDueToError = true;
             logger.d("CRITICAL: Couldn't invoke exception handler");
           }
         } catch (e, stackTrace) {
           shouldExit = true;
+          exitDueToError = true;
           logger.d(
               "CRITICAL: Unknown error occurred: $e stack trace: $stackTrace");
         }
         if (shouldExit) {
           timer.cancel();
-          controller.sink.add(ExceptionHandlerExit());
+          controller.sink.add(
+              exitDueToError ? ExceptionHandlerExit() : WatchCompleted());
           controller.sink.add(StreamControllerClosed());
           controller.close();
         }
@@ -217,7 +229,13 @@ class StatusChange extends StatusUpdateEvent {
 
 class StreamControllerClosed extends StatusUpdateEvent {}
 
+/// Emitted when the watcher stops because the exception handler gave up after
+/// repeated errors.
 class ExceptionHandlerExit extends StatusUpdateEvent {}
+
+/// Emitted when the watcher stops because the watched transaction(s) reached a
+/// terminal status (normal, successful completion of the watch).
+class WatchCompleted extends StatusUpdateEvent {}
 
 class WatcherResult {
   StreamController<StatusUpdateEvent> controller;

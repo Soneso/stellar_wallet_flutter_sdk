@@ -204,6 +204,13 @@ class Sep6 {
       String? stellarTransactionId,
       String? externalTransactionId,
       String? lang}) async {
+    if (id == null &&
+        stellarTransactionId == null &&
+        externalTransactionId == null) {
+      throw ValidationException(
+          "One of id, stellarTransactionId or externalTransactionId is required.");
+    }
+
     var service = await _transferService();
 
     var request = flutter_sdk.AnchorTransactionRequest();
@@ -690,7 +697,7 @@ class Sep6WithdrawSuccess extends Sep6TransferResponse {
       flutter_sdk.WithdrawResponse response) {
     Sep6ExtraInfo? extraInfo;
     if (response.extraInfo != null) {
-      extraInfo == Sep6ExtraInfo.fromExtraInfo(response.extraInfo!);
+      extraInfo = Sep6ExtraInfo.fromExtraInfo(response.extraInfo!);
     }
     return Sep6WithdrawSuccess(
         accountId: response.accountId,
@@ -769,6 +776,7 @@ class Sep6DepositSuccess extends Sep6TransferResponse {
         id: response.id,
         eta: response.eta,
         minAmount: response.minAmount,
+        maxAmount: response.maxAmount,
         feeFixed: response.feeFixed,
         feePercent: response.feePercent,
         extraInfo: extraInfo,

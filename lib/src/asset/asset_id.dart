@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
-import 'package:logger/logger.dart';
 
 const stellarScheme = "stellar";
 const fiatScheme = "iso4217";
@@ -38,9 +37,8 @@ abstract class StellarAssetId extends AssetId {
     } else if (asset is flutter_sdk.AssetTypeCreditAlphaNum) {
       return IssuedAssetId(code: asset.code, issuer: asset.issuerId);
     } else if (asset is flutter_sdk.AssetTypePoolShare) {
-      Logger().w("Pool share is not supported by SDK yet");
-      return IssuedAssetId(code: "", issuer: "");
-      // TODO: add this when we add support for liquidity pools
+      throw UnsupportedError(
+          "Liquidity pool share assets are not supported");
     } else {
       throw UnsupportedError("Unknown asset type");
     }

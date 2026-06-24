@@ -14,6 +14,9 @@ pubspec.lock
 # If you don't generate documentation locally you can remove this line.
 doc/api/
 
+# Test coverage output
+coverage/
+
 # dotenv environment variables file
 .env*
 
@@ -28,3 +31,6 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Local planning notes (not part of the published package)
+plans/

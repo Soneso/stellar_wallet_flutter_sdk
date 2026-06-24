@@ -78,15 +78,17 @@ List<AnchorTransaction> transactions = await anchor.sep24().getHistory(asset, au
 Watch transaction:
 
 ```dart
-Watcher watcher = anchor.sep24.watcher();
+Watcher watcher = anchor.sep24().watcher();
 WatcherResult result = watcher.watchOneTransaction(token, "transaction id");
 
 result.controller.stream.listen(
   (event) {
     if (event is StatusChange) {
       print("Status changed to ${event.status}. Transaction: ${event.transaction.id}");
+    } else if (event is WatchCompleted) {
+      print("Watched transaction(s) reached a terminal status");
     } else if (event is ExceptionHandlerExit) {
-      print("Exception handler exited the job");
+      print("The exception handler gave up after repeated errors");
     } else if (event is StreamControllerClosed) {
       print("Stream controller closed. Job is done");
     }
@@ -97,15 +99,17 @@ result.controller.stream.listen(
 Watch asset:
 
 ```dart
-Watcher watcher = anchor.sep24.watcher();
+Watcher watcher = anchor.sep24().watcher();
 WatcherResult result = watcher.watchAsset(token, asset);
 
 result.controller.stream.listen(
   (event) {
     if (event is StatusChange) {
       print("Status changed to ${event.status}. Transaction: ${event.transaction.id}");
+    } else if (event is WatchCompleted) {
+      print("Watched transaction(s) reached a terminal status");
     } else if (event is ExceptionHandlerExit) {
-      print("Exception handler exited the job");
+      print("The exception handler gave up after repeated errors");
     } else if (event is StreamControllerClosed) {
       print("Stream controller closed. Job is done");
     }

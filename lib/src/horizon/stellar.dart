@@ -149,8 +149,12 @@ class Stellar {
 
   /// Server (flutter sdk) allowing you to query data from Horizon.
   flutter_sdk.StellarSDK get server {
-    var horizonUrl = cfg.stellar.horizonUrl;
-    return flutter_sdk.StellarSDK(horizonUrl);
+    var sdk = flutter_sdk.StellarSDK(cfg.stellar.horizonUrl);
+    final defaultClient = cfg.app.defaultClient;
+    if (defaultClient != null) {
+      sdk.httpClient = defaultClient;
+    }
+    return sdk;
   }
 
   /// Signs the transaction with the given keypair. Uses the network from [cfg.stellar.network].
@@ -191,8 +195,11 @@ class Stellar {
       for (final record in strictSendPaths.records) {
         result.add(PaymentPath.fromPathResponse(record));
       }
-    } catch (exception) {
-      // request failed.
+    } catch (e) {
+      if (e is flutter_sdk.ErrorResponse) {
+        throw HorizonRequestFailedException(e);
+      }
+      rethrow;
     }
 
     return result;
@@ -224,8 +231,11 @@ class Stellar {
       for (final record in strictSendPaths.records) {
         result.add(PaymentPath.fromPathResponse(record));
       }
-    } catch (exception) {
-      // request failed.
+    } catch (e) {
+      if (e is flutter_sdk.ErrorResponse) {
+        throw HorizonRequestFailedException(e);
+      }
+      rethrow;
     }
 
     return result;
@@ -259,8 +269,11 @@ class Stellar {
       for (final record in strictSendPaths.records) {
         result.add(PaymentPath.fromPathResponse(record));
       }
-    } catch (exception) {
-      // request failed.
+    } catch (e) {
+      if (e is flutter_sdk.ErrorResponse) {
+        throw HorizonRequestFailedException(e);
+      }
+      rethrow;
     }
 
     return result;
@@ -288,8 +301,11 @@ class Stellar {
       for (final record in strictSendPaths.records) {
         result.add(PaymentPath.fromPathResponse(record));
       }
-    } catch (exception) {
-      // request failed.
+    } catch (e) {
+      if (e is flutter_sdk.ErrorResponse) {
+        throw HorizonRequestFailedException(e);
+      }
+      rethrow;
     }
 
     return result;

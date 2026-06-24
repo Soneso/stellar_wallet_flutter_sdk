@@ -32,8 +32,26 @@ class AccountRecover extends AbstractAccountRecover {
   http.Client? httpClient;
   Map<String, String>? httpRequestHeaders;
 
+  /// HTTP client used for Horizon access. Distinct from [httpClient] (which is
+  /// used for the recovery servers and TOML fetches) so callers can mock the
+  /// recovery servers while still reaching the real Horizon, or vice versa.
+  http.Client? horizonHttpClient;
+
   AccountRecover(this.stellar, this.servers,
-      {this.httpClient, this.httpRequestHeaders});
+      {this.httpClient, this.httpRequestHeaders, this.horizonHttpClient});
+
+  /// Builds a [flutter_sdk.StellarSDK] for Horizon access, applying
+  /// [horizonHttpClient] when set. The client is applied via the setter because
+  /// the base SDK constructor's httpClient parameter expects a dart:io
+  /// HttpClient, not a package:http one.
+  flutter_sdk.StellarSDK _horizonSdk() {
+    var sdk = flutter_sdk.StellarSDK(stellar.horizonUrl);
+    final client = horizonHttpClient;
+    if (client != null) {
+      sdk.httpClient = client;
+    }
+    return sdk;
+  }
 
   /// Replace lost device key with a new key
   /// @account target account
@@ -48,7 +66,7 @@ class AccountRecover extends AbstractAccountRecover {
       Map<RecoveryServerKey, RecoveryServerSigning> serverAuth,
       {AccountKeyPair? lostKey,
       AccountKeyPair? sponsorAddress}) async {
-    var sdk = flutter_sdk.StellarSDK(stellar.horizonUrl);
+    var sdk = _horizonSdk();
     flutter_sdk.AccountResponse? stellarAccount;
     try {
       stellarAccount = await sdk.accounts.account(account.address);
@@ -73,7 +91,7 @@ class AccountRecover extends AbstractAccountRecover {
           if (e.code != 404) {
             throw HorizonRequestFailedException(e);
           } else {
-            throw ValidationException("Sponsor account dose not exist");
+            throw ValidationException("Sponsor account does not exist");
           }
         } else {
           rethrow;
@@ -262,7 +280,8 @@ class Recovery extends AccountRecover {
       : super(cfg.stellar, servers,
             httpClient: httpClient ?? cfg.app.defaultClient,
             httpRequestHeaders:
-                httpRequestHeaders ?? cfg.app.defaultHttpRequestHeaders);
+                httpRequestHeaders ?? cfg.app.defaultHttpRequestHeaders,
+            horizonHttpClient: cfg.app.defaultClient);
 
   /// Create new Sep10 object to authenticate account with the recovery server using SEP-10.
   Future<Sep10> sep10Auth(RecoveryServerKey key) async {
@@ -375,7 +394,7 @@ class Recovery extends AccountRecover {
       List<AccountSigner> accountSigners,
       AccountThreshold accountThreshold,
       AccountKeyPair? sponsorAddress) async {
-    var sdk = flutter_sdk.StellarSDK(cfg.stellar.horizonUrl);
+    var sdk = _horizonSdk();
     flutter_sdk.AccountResponse? acc;
     try {
       acc = await sdk.accounts.account(account.address);
@@ -401,7 +420,7 @@ class Recovery extends AccountRecover {
           if (e.code != 404) {
             throw HorizonRequestFailedException(e);
           } else {
-            throw ValidationException("Sponsor account dose not exist");
+            throw ValidationException("Sponsor account does not exist");
           }
         } else {
           rethrow;

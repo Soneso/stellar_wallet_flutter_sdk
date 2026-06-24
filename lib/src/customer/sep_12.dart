@@ -49,6 +49,7 @@ class Sep12 {
     request.memo = memo;
     request.type = type;
     request.transactionId = transactionId;
+    request.lang = lang;
     request.jwt = token.jwt;
 
     flutter_sdk.GetCustomerInfoResponse infoResponse =

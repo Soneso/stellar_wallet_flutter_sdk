@@ -2,6 +2,7 @@
 
 ![Dart](https://img.shields.io/badge/Dart-green.svg)
 ![Flutter](https://img.shields.io/badge/Flutter-blue.svg)
+[![codecov](https://codecov.io/gh/Soneso/stellar_wallet_flutter_sdk/branch/main/graph/badge.svg)](https://codecov.io/gh/Soneso/stellar_wallet_flutter_sdk)
 
 
 The Stellar Wallet SDK for Flutter is a library that allows developers to build wallet applications on the Stellar Network faster. It
@@ -16,8 +17,8 @@ Latest stable release:
 
 ```
 dependencies:
-  stellar_wallet_flutter_sdk: ^1.1.2
-  stellar_flutter_sdk: ^3.0.5
+  stellar_wallet_flutter_sdk: ^1.1.3
+  stellar_flutter_sdk: ^3.2.0
 ```
 
 The SDK supports Android, iOS, and Web platforms.
@@ -98,7 +99,7 @@ var wallet = Wallet(StellarConfiguration.publicNet);
 
 ### Configuring a custom HTTP client
 
-The Flutter Wallet SDK uses the standard Client from the [http package](https://pub.dev/packages/http) for all network requests (excluding Horizon, where the Flutter Stellar SDK's HTTP client is used). 
+The Flutter Wallet SDK uses the standard Client from the [http package](https://pub.dev/packages/http) for all network requests, including Horizon. 
 
 Optionally, you can set your own client from [http package](https://pub.dev/packages/http) to be used across the app.
 
