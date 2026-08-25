@@ -54,9 +54,11 @@ void main() {
 
   final Random random = Random.secure();
 
-  Uint8List generateNonce([int length = 64]) {
+  // SEP-10 requires the challenge data value to be the 64-byte base64
+  // encoding of a 48-byte cryptographic nonce.
+  Uint8List generateNonce([int length = 48]) {
     var values = List<int>.generate(length, (i) => random.nextInt(256));
-    return Uint8List.fromList(base64Url.encode(values).codeUnits);
+    return Uint8List.fromList(base64.encode(values).codeUnits);
   }
 
   TransactionPreconditions validTimeBounds() {

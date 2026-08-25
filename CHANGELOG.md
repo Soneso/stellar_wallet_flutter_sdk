@@ -1,3 +1,8 @@
+## [1.1.4] - 25.Aug.2026.
+- update to stellar_flutter_sdk 3.6.0, which supports Protocol 28 (Horizon v28.0.0)
+- SEP-10: authentication now rejects challenge transactions whose first operation does not carry a 64-byte base64 encoding of a 48-byte nonce, and challenges without finite time bounds, as required by the spec (validated by stellar_flutter_sdk)
+- SEP-6: the fee request sends the amount as a plain decimal; amounts below 1e-6 previously went out in exponential notation (fixed in stellar_flutter_sdk)
+
 ## [1.1.3] - 24.Jun.2026.
 - update to stellar_flutter_sdk 3.2.0
 - watcher: add the WatchCompleted event, emitted when the watched transaction(s) reach a terminal status (behavior change for watcher consumers)
