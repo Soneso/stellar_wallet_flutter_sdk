@@ -1,3 +1,7 @@
+## [1.1.5] - 15.Sep.2026.
+- update to stellar_flutter_sdk 3.7.0
+- a payment amount, path payment amount, trustline limit, or create-account starting balance outside the int64 stroop range (-922337203685.4775808 to 922337203685.4775807) now throws an `Exception` when the transaction is signed or serialized; such an amount previously went on the wire with only its low 64 bits kept (fixed in stellar_flutter_sdk)
+
 ## [1.1.4] - 25.Aug.2026.
 - update to stellar_flutter_sdk 3.6.0, which supports Protocol 28 (Horizon v28.0.0)
 - SEP-10: authentication now rejects challenge transactions whose first operation does not carry a 64-byte base64 encoding of a 48-byte nonce, and challenges without finite time bounds, as required by the spec (validated by stellar_flutter_sdk)
