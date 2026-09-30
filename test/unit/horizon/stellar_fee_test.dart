@@ -27,8 +27,10 @@ void main() {
   // result_xdr decoding to txFAILED (a single payment op with no_destination).
   const failedResultXdr = "AAAAAAAAAGT/////AAAAAQAAAAAAAAAB////+wAAAAA=";
 
-  // Builds an AccountResponse JSON for the given account id and string sequence.
-  String accountJson(String accountId, String sequence) {
+  // Builds an AccountResponse JSON for the given account id and string
+  // sequence, with the given account data entries (values base64 encoded).
+  String accountJson(String accountId, String sequence,
+      {Map<String, String> data = const {}}) {
     final map = {
       '_links': {
         'self': {
@@ -98,7 +100,7 @@ void main() {
       'signers': [
         {'weight': 1, 'key': accountId, 'type': 'ed25519_public_key'}
       ],
-      'data': {},
+      'data': data,
       'num_sponsoring': 0,
       'num_sponsored': 0,
       'paging_token': accountId
@@ -304,6 +306,51 @@ void main() {
         expect(e.operationsResultCodes, contains("op_no_destination"));
         expect(e.response.success, isFalse);
       }
+    });
+
+    test(
+        'throws AccountRequiresMemoException and posts nothing when the '
+        'destination requires a memo', () async {
+      final requests = <String>[];
+      var mock = MockClient((request) async {
+        requests.add("${request.method} ${request.url.path}");
+        if (request.method == "GET" &&
+            request.url.path == "/accounts/$destinationAccountId") {
+          // config.memo_required = 1 ("MQ==" is base64 of "1").
+          return http.Response(
+              accountJson(destinationAccountId, "3",
+                  data: {'config.memo_required': 'MQ=='}),
+              200);
+        }
+        if (request.method == "GET" &&
+            request.url.path == "/accounts/$sourceAccountId") {
+          return http.Response(accountJson(sourceAccountId, "42"), 200);
+        }
+        if (request.method == "POST") {
+          return http.Response(submitSuccessBody(), 200);
+        }
+        return http.Response("not found", 404);
+      });
+
+      var source = SigningKeyPair.fromSecret(sourceSecret);
+      try {
+        await walletWith(mock).stellar().submitWithFeeIncrease(
+              sourceAddress: source,
+              timeout: const Duration(minutes: 5),
+              baseFeeIncrease: 100,
+              maxBaseFee: 2000,
+              buildingFunction: (builder) =>
+                  builder.transfer(destinationAccountId, NativeAssetId(), "1"),
+            );
+        fail("expected AccountRequiresMemoException");
+      } on flutter_sdk.AccountRequiresMemoException catch (e) {
+        expect(e.accountId, destinationAccountId);
+        expect(e.operationIndex, 0);
+      }
+      expect(requests, [
+        "GET /accounts/$sourceAccountId",
+        "GET /accounts/$destinationAccountId"
+      ]);
     });
   });
 

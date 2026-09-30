@@ -25,6 +25,20 @@ class Stellar {
 
   /// Submit a [signedTransaction] to the Stellar Network. Returns true if submitted successfully.
   /// Throws [TransactionSubmitFailedException] when submission failed.
+  ///
+  /// Before submitting, `stellar_flutter_sdk` runs the SEP-29 memo-required
+  /// check. For a transaction without a memo, it makes up to one Horizon
+  /// lookup per distinct non-muxed payment, path payment or account merge
+  /// destination, in operation order (for a fee bump transaction, of the
+  /// inner transaction), stopping on the first memo requirement or lookup
+  /// failure. Throws [flutter_sdk.AccountRequiresMemoException] when a
+  /// destination has the `config.memo_required` data entry set to `1`. A 404
+  /// is skipped. Other lookup failures propagate: [flutter_sdk.ErrorResponse]
+  /// for an HTTP error, [flutter_sdk.TooManyRequestsException] for a rate
+  /// limit, `http.ClientException` for a transport failure, or a decoding
+  /// error such as [FormatException] or [TypeError] for a malformed account
+  /// response. [TypeError] is not caught by `on Exception catch`. In all these
+  /// cases nothing is submitted.
   Future<bool> submitTransaction(
       flutter_sdk.AbstractTransaction signedTransaction) async {
     var sdk = server;
@@ -46,6 +60,10 @@ class Stellar {
     }
   }
 
+  /// Builds a transaction for [sourceAddress] with [buildingFunction], signs
+  /// it with [sourceAddress] and submits it to the Stellar Network. See
+  /// [submitWithFeeIncreaseAndSignerFunction] for the retry behavior and the
+  /// thrown exceptions.
   Future<bool> submitWithFeeIncrease(
       {required SigningKeyPair sourceAddress,
       required Duration timeout,
@@ -65,6 +83,27 @@ class Stellar {
         memo: memo);
   }
 
+  /// Builds a transaction for [sourceAddress] with [buildingFunction], signs
+  /// it with [signerFunction] and submits it to the Stellar Network. When the
+  /// submission times out, the transaction is rebuilt with a base fee of its
+  /// previous total fee plus [baseFeeIncrease], capped at [maxBaseFee], and
+  /// submitted again.
+  /// Returns true if submitted successfully.
+  /// Throws [TransactionSubmitFailedException] when submission failed.
+  ///
+  /// Before submitting, `stellar_flutter_sdk` runs the SEP-29 memo-required
+  /// check. For a transaction without a memo, it makes up to one Horizon
+  /// lookup per distinct non-muxed payment, path payment or account merge
+  /// destination, in operation order, stopping on the first memo
+  /// requirement or lookup failure. Throws
+  /// [flutter_sdk.AccountRequiresMemoException] when a destination has the
+  /// `config.memo_required` data entry set to `1`. A 404 is skipped. Other
+  /// lookup failures propagate: [flutter_sdk.ErrorResponse] for an HTTP error,
+  /// [flutter_sdk.TooManyRequestsException] for a rate limit,
+  /// `http.ClientException` for a transport failure, or a decoding error such
+  /// as [FormatException] or [TypeError] for a malformed account response.
+  /// [TypeError] is not caught by `on Exception catch`. In all these cases
+  /// nothing is submitted.
   Future<bool> submitWithFeeIncreaseAndSignerFunction(
       {required AccountKeyPair sourceAddress,
       required Duration timeout,
@@ -113,6 +152,14 @@ class Stellar {
   }
 
   /// Decode transaction from the given [xdr] base 64 string.
+  ///
+  /// Throws [FormatException] when [xdr] is not base64.
+  /// For a malformed envelope, `stellar_flutter_sdk` throws [RangeError] for
+  /// a negative array count or length, a count or length exceeding the
+  /// remaining input, or a read past the input. A zero price denominator
+  /// throws [ArgumentError]; other invalid content, such as an unknown
+  /// union discriminant, throws an [Exception]. [RangeError] and
+  /// [ArgumentError] are not caught by `on Exception catch`.
   flutter_sdk.AbstractTransaction decodeTransaction(String xdr) {
     return flutter_sdk.AbstractTransaction.fromEnvelopeXdrString(xdr);
   }

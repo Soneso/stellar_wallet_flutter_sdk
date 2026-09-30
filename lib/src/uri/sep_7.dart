@@ -27,11 +27,24 @@ abstract class Sep7 {
         httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
   }
 
+  /// Parses a SEP-7 [uri] into a [Sep7Tx] or a [Sep7Pay].
+  ///
+  /// Throws [Sep7UriTypeNotSupported] for a web+stellar URI whose operation
+  /// type is neither 'tx' nor 'pay', and [Sep7InvalidUri] with the reason for
+  /// any other invalid [uri], including a query that cannot be decoded and an
+  /// 'xdr' parameter that is not a valid transaction envelope.
   static Sep7 parseSep7Uri(String uri,
       {http.Client? httpClient, Map<String, String>? httpRequestHeaders}) {
     final uriScheme = flutter_sdk.URIScheme(
         httpClient: httpClient, httpRequestHeaders: httpRequestHeaders);
-    final parseResult = uriScheme.tryParseSep7Url(uri);
+    final flutter_sdk.ParsedSep7UrlResult? parseResult;
+    try {
+      parseResult = uriScheme.tryParseSep7Url(uri);
+    } on FormatException catch (e) {
+      throw Sep7InvalidUri(_unparsableUriReason(e));
+    } on Error catch (e) {
+      throw Sep7InvalidUri(_invalidXdrReason(e));
+    }
     if (parseResult == null) {
       final opType = _operationTypeFromUri(uri);
       if (opType != null &&
@@ -40,6 +53,8 @@ abstract class Sep7 {
         throw Sep7UriTypeNotSupported(
             "Stellar Sep-7 URI operation type '$opType' is not currently supported");
       }
+      // tryParseSep7Url returned null, so validating [uri] completed with an
+      // invalid result; validating it again yields the reason.
       final validationResult = uriScheme.isValidSep7Url(uri);
       throw Sep7InvalidUri(validationResult.reason ?? 'invalid sep7 url');
     }
@@ -74,11 +89,46 @@ abstract class Sep7 {
     return op.isEmpty ? null : op;
   }
 
+  /// Validates a SEP-7 [uri] without verifying its signature.
+  ///
+  /// Returns a result with `result` true for a valid [uri]. For an invalid
+  /// [uri], including a query that cannot be decoded and an 'xdr' parameter
+  /// that is not a valid transaction envelope, `result` is false and `reason`
+  /// names the problem.
   static IsValidSep7UriResult isValidSep7Uri(String uri) {
-    final uriScheme = flutter_sdk.URIScheme();
-    final validationResult = uriScheme.isValidSep7Url(uri);
+    final validationResult = _validate(flutter_sdk.URIScheme(), uri);
     return IsValidSep7UriResult(
         result: validationResult.result, reason: validationResult.reason);
+  }
+
+  /// Validates [uri] with [uriScheme]. `stellar_flutter_sdk` throws a
+  /// [FormatException] for a query that is not valid percent-encoded UTF-8,
+  /// and reports some malformed 'xdr' envelopes by throwing an [Error] while
+  /// decoding them: a [RangeError] for an array count or length the input
+  /// cannot hold, an [ArgumentError] for a zero price denominator. Such a
+  /// [uri] yields an invalid result.
+  static flutter_sdk.IsValidSep7UrlResult _validate(
+      flutter_sdk.URIScheme uriScheme, String uri) {
+    try {
+      return uriScheme.isValidSep7Url(uri);
+    } on FormatException catch (e) {
+      return flutter_sdk.IsValidSep7UrlResult(
+          result: false, reason: _unparsableUriReason(e));
+    } on Error catch (e) {
+      return flutter_sdk.IsValidSep7UrlResult(
+          result: false, reason: _invalidXdrReason(e));
+    }
+  }
+
+  /// The reason reported for a URI whose query could not be decoded.
+  static String _unparsableUriReason(FormatException exception) {
+    return "Could not parse url: ${exception.message}";
+  }
+
+  /// The reason reported for an 'xdr' parameter whose decoding threw [error].
+  static String _invalidXdrReason(Error error) {
+    return "The provided '${flutter_sdk.URIScheme.xdrParameterName}' "
+        "parameter is not a valid transaction envelope: $error";
   }
 
   /// Takes a Sep-7 URL-decoded '[replace]' string param and parses it to a list of
@@ -288,8 +338,16 @@ abstract class Sep7 {
   /// The given [keypair] (including secret key) is used to sign the request.
   /// This should be the keypair found in the URI_REQUEST_SIGNING_KEY field of the
   /// 'origin_domains' stellar.toml.
+  /// Returns the signature. Throws [Sep7InvalidUri] with the reason when the
+  /// URI is not valid, including an invalid `xdr` envelope. Other errors from
+  /// the SDK's signing method propagate.
   String addSignature(SigningKeyPair keypair) {
-    final signedUrl = uriScheme.addSignature(toString(), keypair.keyPair);
+    final url = toString();
+    final validationResult = _validate(uriScheme, url);
+    if (!validationResult.result) {
+      throw Sep7InvalidUri(validationResult.reason ?? 'invalid sep7 url');
+    }
+    final signedUrl = uriScheme.addSignature(url, keypair.keyPair);
     final signedUri = Uri.parse(signedUrl);
     final signature = signedUri
         .queryParameters[flutter_sdk.URIScheme.signatureParameterName]!;
@@ -301,9 +359,13 @@ abstract class Sep7 {
   /// returns 'true' if the signature is valid for
   /// the current URI and origin_domain. Returns 'false' if signature verification
   /// fails, or if there is a problem looking up the stellar.toml associated with
-  /// the origin_domain.
+  /// the origin_domain. Returns 'false' as well when the URI is not valid,
+  /// including an 'xdr' parameter that is not a valid transaction envelope.
   Future<bool> verifySignature() async {
     final sep7Url = toString();
+    if (!_validate(uriScheme, sep7Url).result) {
+      return false;
+    }
     final validationResult = await uriScheme.isValidSep7SignedUrl(sep7Url);
     return validationResult.result;
   }

@@ -30,8 +30,10 @@ void main() {
   // no_destination). Verified via the stellar XDR codec.
   const failedResultXdr = "AAAAAAAAAGT/////AAAAAQAAAAAAAAAB////+wAAAAA=";
 
-  // Builds an AccountResponse JSON for the given account id and string sequence.
-  String accountJson(String accountId, String sequence) {
+  // Builds an AccountResponse JSON for the given account id and string
+  // sequence, with the given account data entries (values base64 encoded).
+  String accountJson(String accountId, String sequence,
+      {Map<String, String> data = const {}}) {
     final map = {
       '_links': {
         'self': {
@@ -105,7 +107,7 @@ void main() {
           'type': 'ed25519_public_key'
         }
       ],
-      'data': {},
+      'data': data,
       'num_sponsoring': 0,
       'num_sponsored': 0,
       'paging_token': accountId
@@ -389,16 +391,11 @@ void main() {
       return tx;
     }
 
-    test('returns true on a successful submission', () async {
-      String? capturedTx;
-      var mock = MockClient((request) async {
-        expect(request.method, "POST");
-        expect(request.url.path, contains("/transactions"));
-        capturedTx = request.bodyFields['tx'];
-        // success is derived from result_xdr (which decodes to txSUCCESS); the
-        // 'successful' flag is intentionally omitted so the response is not
-        // forced through full TransactionResponse parsing.
-        var body = json.encode({
+    // The response a submit POST gets for a successful transaction. Success
+    // is derived from result_xdr (which decodes to txSUCCESS); the
+    // 'successful' flag is omitted so the response is not forced through
+    // full TransactionResponse parsing.
+    String submitSuccessBody() => json.encode({
           'hash':
               'b9d0b2292c4e09e8eb22d036171491e87b8d2086bf8b265874c8d182cb9c9020',
           'ledger': 826150,
@@ -407,20 +404,45 @@ void main() {
           'result_meta_xdr': 'AAAAAwAAAAA=',
           'fee_meta_xdr': 'AAAAAgAAAAA=',
         });
-        return http.Response(body, 200);
+
+    // The SEP-29 memo-required check looks up the payment destination before
+    // the transaction is posted; an ordinary destination has no
+    // config.memo_required data entry.
+    test('returns true on a successful submission', () async {
+      String? capturedTx;
+      final requests = <String>[];
+      var mock = MockClient((request) async {
+        requests.add("${request.method} ${request.url.path}");
+        if (request.method == "GET") {
+          expect(request.url.path, "/accounts/$destinationAccountId");
+          return http.Response(accountJson(destinationAccountId, "7"), 200);
+        }
+        expect(request.method, "POST");
+        expect(request.url.path, contains("/transactions"));
+        capturedTx = request.bodyFields['tx'];
+        return http.Response(submitSuccessBody(), 200);
       });
 
       var tx = signedTx();
       var result = await walletWith(mock).stellar().submitTransaction(tx);
 
       expect(result, isTrue);
+      expect(requests,
+          ["GET /accounts/$destinationAccountId", "POST /transactions"]);
       // The submitted envelope matches the signed transaction.
       expect(capturedTx, tx.toEnvelopeXdrBase64());
     });
 
     test('throws TransactionSubmitFailedException on a failed submission',
         () async {
+      final requests = <String>[];
       var mock = MockClient((request) async {
+        requests.add("${request.method} ${request.url.path}");
+        if (request.method == "GET") {
+          expect(request.url.path, "/accounts/$destinationAccountId");
+          return http.Response(accountJson(destinationAccountId, "7"), 200);
+        }
+        expect(request.method, "POST");
         var body = json.encode({
           'type': 'https://stellar.org/horizon-errors/transaction_failed',
           'title': 'Transaction Failed',
@@ -446,6 +468,79 @@ void main() {
         expect(e.operationsResultCodes, contains("op_no_destination"));
         expect(e.response.success, isFalse);
       }
+      expect(requests,
+          ["GET /accounts/$destinationAccountId", "POST /transactions"]);
+    });
+
+    // Answers account lookups: [memoRequiredAccountId] carries
+    // config.memo_required = 1 ("MQ==" is base64 of "1"), every other account
+    // is an ordinary one. Records each request; a POST is answered as a
+    // successful submission.
+    MockClient memoRequiredMock(
+        String memoRequiredAccountId, List<String> requests) {
+      return MockClient((request) async {
+        requests.add("${request.method} ${request.url.path}");
+        if (request.method == "GET" &&
+            request.url.path.startsWith("/accounts/")) {
+          final accountId = request.url.pathSegments.last;
+          final data = accountId == memoRequiredAccountId
+              ? {'config.memo_required': 'MQ=='}
+              : <String, String>{};
+          return http.Response(accountJson(accountId, "7", data: data), 200);
+        }
+        return http.Response(submitSuccessBody(), 200);
+      });
+    }
+
+    test(
+        'throws AccountRequiresMemoException and posts nothing when the '
+        'destination requires a memo', () async {
+      final requests = <String>[];
+      var mock = memoRequiredMock(destinationAccountId, requests);
+
+      var tx = signedTx();
+      try {
+        await walletWith(mock).stellar().submitTransaction(tx);
+        fail("expected AccountRequiresMemoException");
+      } on flutter_sdk.AccountRequiresMemoException catch (e) {
+        expect(e.accountId, destinationAccountId);
+        expect(e.operationIndex, 0);
+      }
+      expect(requests, ["GET /accounts/$destinationAccountId"]);
+    });
+
+    test(
+        'throws AccountRequiresMemoException for a fee bump whose inner '
+        'transaction pays a memo-required destination', () async {
+      final requests = <String>[];
+      var mock = memoRequiredMock(destinationAccountId, requests);
+      var wallet = walletWith(mock);
+      var stellar = wallet.stellar();
+
+      // The first payment goes to an ordinary account, the second to the
+      // memo-required one, so the reported operation index is 1.
+      var signer = SigningKeyPair.random();
+      var account = flutter_sdk.Account(signer.address, BigInt.from(1));
+      var inner = TxBuilder(account)
+          .transfer(issuerAccountId, NativeAssetId(), "1")
+          .transfer(destinationAccountId, NativeAssetId(), "1")
+          .build();
+      stellar.sign(inner, signer);
+      var feeSigner = SigningKeyPair.random();
+      var feeBump = stellar.makeFeeBump(feeSigner, inner);
+      stellar.sign(feeBump, feeSigner);
+
+      try {
+        await stellar.submitTransaction(feeBump);
+        fail("expected AccountRequiresMemoException");
+      } on flutter_sdk.AccountRequiresMemoException catch (e) {
+        expect(e.accountId, destinationAccountId);
+        expect(e.operationIndex, 1);
+      }
+      expect(requests, [
+        "GET /accounts/$issuerAccountId",
+        "GET /accounts/$destinationAccountId"
+      ]);
     });
   });
 

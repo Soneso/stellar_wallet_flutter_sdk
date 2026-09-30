@@ -2,6 +2,9 @@
 // Use of this source code is governed by a license that can be
 // found in the LICENSE file.
 
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
 import 'package:stellar_wallet_flutter_sdk/src/exceptions/exceptions.dart';
@@ -149,6 +152,151 @@ void main() {
       final uri = 'web+stellar:tx?xdr=${Uri.encodeComponent(classicTxXdr)}';
       final result = Sep7.isValidSep7Uri(uri);
       expect(result.result, isTrue);
+    });
+  });
+
+  // Envelopes that stellar_flutter_sdk refuses by throwing an Error while
+  // decoding them. Each is a signed v1 envelope with time bounds and no memo,
+  // with one XDR field overwritten: the operations count sits at byte 76,
+  // and after a single payment operation (56 bytes) and the 4-byte
+  // transaction ext, the signatures count sits at byte 140.
+  group('Sep7 malformed xdr envelope Tests', () {
+    const issuerAccountId =
+        "GCZJM35NKGVK47BB4SPBDV25477PZYIYPVVG453LPYFNXLS3FGHDXOCM";
+    final signer = flutter_sdk.KeyPair.random();
+    final account = flutter_sdk.Account(signer.accountId, BigInt.from(1));
+
+    Uint8List envelope(flutter_sdk.Operation operation) {
+      final tx = flutter_sdk.TransactionBuilder(account)
+          .addOperation(operation)
+          .addPreconditions(flutter_sdk.TransactionPreconditions()
+            ..timeBounds = flutter_sdk.TimeBounds(0, 0))
+          .build();
+      tx.sign(signer, flutter_sdk.Network.TESTNET);
+      return base64Decode(tx.toEnvelopeXdrBase64());
+    }
+
+    Uint8List payment() => envelope(flutter_sdk.PaymentOperationBuilder(
+            destinationAccountId, flutter_sdk.Asset.NATIVE, "1")
+        .build());
+
+    // Overwrites the int32 at [offset] after checking its original value.
+    Uint8List withInt32(Uint8List bytes, int offset, int expected, int value) {
+      final data = ByteData.sublistView(bytes);
+      expect(data.getInt32(offset), expected);
+      data.setInt32(offset, value);
+      return bytes;
+    }
+
+    Uint8List negativeOperationsCount() => withInt32(payment(), 76, 1, -1);
+
+    Uint8List negativeSignaturesCount() => withInt32(payment(), 140, 1, -1);
+
+    // A manage sell offer at price 1/2 whose denominator is set to 0.
+    Uint8List zeroPriceDenominator() {
+      final bytes = envelope(flutter_sdk.ManageSellOfferOperationBuilder(
+              flutter_sdk.Asset.NATIVE,
+              flutter_sdk.Asset.createNonNativeAsset("USD", issuerAccountId),
+              "1",
+              "0.5")
+          .build());
+      final data = ByteData.sublistView(bytes);
+      for (var i = 76; i + 8 <= bytes.length; i++) {
+        if (data.getInt32(i) == 1 && data.getInt32(i + 4) == 2) {
+          return withInt32(bytes, i + 4, 2, 0);
+        }
+      }
+      throw StateError("price 1/2 not found in the envelope");
+    }
+
+    String txUri(Uint8List bytes) =>
+        'web+stellar:tx?xdr=${Uri.encodeComponent(base64Encode(bytes))}';
+
+    const invalidEnvelope =
+        "The provided 'xdr' parameter is not a valid transaction envelope";
+
+    final cases = <String, (Uint8List Function(), String)>{
+      'a negative operations count': (
+        negativeOperationsCount,
+        'XDR array count cannot be negative, got -1'
+      ),
+      'a negative signatures count': (
+        negativeSignaturesCount,
+        'XDR array count cannot be negative, got -1'
+      ),
+      'a zero price denominator': (
+        zeroPriceDenominator,
+        'Price denominator must not be zero: 1/0'
+      ),
+    };
+
+    test('the unmodified envelopes are valid', () {
+      expect(Sep7.isValidSep7Uri(txUri(payment())).result, isTrue);
+      final offer = envelope(flutter_sdk.ManageSellOfferOperationBuilder(
+              flutter_sdk.Asset.NATIVE,
+              flutter_sdk.Asset.createNonNativeAsset("USD", issuerAccountId),
+              "1",
+              "0.5")
+          .build());
+      expect(Sep7.isValidSep7Uri(txUri(offer)).result, isTrue);
+    });
+
+    cases.forEach((name, testCase) {
+      final (build, detail) = testCase;
+
+      test('isValidSep7Uri reports an envelope with $name as invalid', () {
+        final result = Sep7.isValidSep7Uri(txUri(build()));
+        expect(result.result, isFalse);
+        expect(result.reason, startsWith(invalidEnvelope));
+        expect(result.reason, contains(detail));
+      });
+
+      test('parseSep7Uri throws Sep7InvalidUri for an envelope with $name',
+          () {
+        expect(
+          () => Sep7.parseSep7Uri(txUri(build())),
+          throwsA(isA<Sep7InvalidUri>()
+              .having((e) => e.message, 'message', startsWith(invalidEnvelope))
+              .having((e) => e.message, 'message', contains(detail))),
+        );
+      });
+
+      test('verifySignature returns false for an envelope with $name',
+          () async {
+        final sep7Tx = Sep7Tx()..setXdr(base64Encode(build()));
+        expect(await sep7Tx.verifySignature(), isFalse);
+      });
+
+      test('addSignature throws Sep7InvalidUri for an envelope with $name',
+          () {
+        final sep7Tx = Sep7Tx()..setXdr(base64Encode(build()));
+        expect(
+          () => sep7Tx.addSignature(SigningKeyPair.fromSecret(fixedSecret)),
+          throwsA(isA<Sep7InvalidUri>()
+              .having((e) => e.message, 'message', startsWith(invalidEnvelope))
+              .having((e) => e.message, 'message', contains(detail))),
+        );
+        expect(sep7Tx.getSignature(), isNull);
+      });
+    });
+  });
+
+  // A query whose percent-encoding is not valid UTF-8 cannot be decoded.
+  group('Sep7 undecodable query Tests', () {
+    const undecodableUri = 'web+stellar:pay?destination=G%FF';
+
+    test('isValidSep7Uri reports the uri as invalid', () {
+      final result = Sep7.isValidSep7Uri(undecodableUri);
+      expect(result.result, isFalse);
+      expect(result.reason, startsWith('Could not parse url: '));
+    });
+
+    test('parseSep7Uri throws Sep7InvalidUri', () {
+      expect(
+        () => Sep7.parseSep7Uri(undecodableUri),
+        throwsA(isA<Sep7InvalidUri>().having(
+            (e) => e.message, 'message', startsWith('Could not parse url: '))),
+      );
     });
   });
 
