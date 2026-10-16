@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:convert';
+import 'dart:io' show File;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -327,6 +328,16 @@ void main() {
           RegExp(r'^\d+\.\d+\.\d+$').hasMatch(Wallet.versionNumber), isTrue,
           reason:
               'versionNumber should be a dotted semantic version string');
+    });
+
+    test('equals the version of pubspec.yaml', () {
+      // flutter test runs with the package root as working directory.
+      final pubspec = File('pubspec.yaml').readAsStringSync();
+      final version = RegExp(r'^version:\s*(\S+)\s*$', multiLine: true)
+          .firstMatch(pubspec)
+          ?.group(1);
+      expect(version, isNotNull, reason: 'pubspec.yaml has no version line');
+      expect(Wallet.versionNumber, version);
     });
   });
 }

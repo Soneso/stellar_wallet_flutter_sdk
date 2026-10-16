@@ -1,3 +1,10 @@
+## [1.1.7] - 16.Oct.2026.
+- update to `stellar_flutter_sdk` 3.9.0; the minimum of Dart 3.8 and Flutter 3.32 is unchanged
+- `Stellar.decodeTransaction` and the SEP-7 methods validate the order of the two credit assets of a liquidity pool share as stellar-core does: by type, then code, then the issuers' raw 32-byte public key bytes. A change trust operation for such a pool decodes in that order. The reversed pair throws `Exception` from `Stellar.decodeTransaction`, and `Sep7.isValidSep7Uri`, `Sep7.parseSep7Uri`, `Sep7.addSignature` and `Sep7.verifySignature` treat the URI as invalid. Pool shares whose issuers sort the same way as `G...` text and as key bytes decode as before. In 1.1.6 the issuers compared by their `G...` text, so some pool shares decoded only in the reversed order
+- `Stellar.decodeTransaction` and the SEP-7 methods decode a muxed contract address (`W...`, CAP-0084) in a transaction envelope; in 1.1.6 such an envelope threw `Exception` and the SEP-7 URI was invalid
+- `stellar_flutter_sdk` 3.9.0 allows `toml` 0.18. When an app resolves it, a `stellar.toml` in TOML 1.1.0 syntax, such as an inline table that spans lines or ends with a comma, loads through `Anchor.sep1`, `Anchor.getInfo` and `Recovery.sep10Auth`; with `toml` 0.17 it fails with `TomlNotFoundException`
+- `Wallet.versionNumber` reports `1.1.7`; 1.1.4 to 1.1.6 reported `1.1.3`
+
 ## [1.1.6] - 01.Oct.2026.
 - update to `stellar_flutter_sdk` 3.8.0
 - requires Dart 3.8 and Flutter 3.32 or later, the minimum of `stellar_flutter_sdk` 3.8.0; the package now declares these constraints in `pubspec.yaml`

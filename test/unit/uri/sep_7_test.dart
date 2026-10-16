@@ -281,6 +281,71 @@ void main() {
     });
   });
 
+  // A change trust operation for the pool share of two USD assets whose
+  // issuers first differ at '2' and 'H'. stellar-core orders the assets of a
+  // pool share by the issuers' raw public key bytes, so the asset of
+  // usdIssuerH comes first.
+  group('Sep7 liquidity pool share order Tests', () {
+    const usdIssuerH =
+        "GDHXVH2CWS5EZLHKSHQXPLVWVJUNNXGLA2RBQQFS3LMMQIXD437QEIRQ";
+    const usdIssuer2 =
+        "GD2VSLB7BPYNKQIF2P632VIVMVXPMU2B5RJU2WO4GATAJRSIDC24ZDUO";
+    final account = flutter_sdk.Account(fixedSecretAccountId, BigInt.from(1));
+
+    // A 'tx' URI whose envelope trusts the pool share of the USD assets of
+    // [issuerA] and [issuerB], in that order. The pool is set at XDR level
+    // because the SDK refuses to build a pool share whose assets are out of
+    // order.
+    String poolShareTrustUri(String issuerA, String issuerB) {
+      final envelope = flutter_sdk.TransactionBuilder(account)
+          .addOperation(flutter_sdk.ChangeTrustOperationBuilder(
+                  flutter_sdk.Asset.createNonNativeAsset("USD", issuerA),
+                  "1000")
+              .build())
+          .build()
+          .toEnvelopeXdr();
+      final pool = flutter_sdk.XdrLiquidityPoolParameters(
+          flutter_sdk.XdrLiquidityPoolType.LIQUIDITY_POOL_CONSTANT_PRODUCT)
+        ..constantProduct =
+            flutter_sdk.XdrLiquidityPoolConstantProductParameters(
+                flutter_sdk.Asset.createNonNativeAsset("USD", issuerA).toXdr(),
+                flutter_sdk.Asset.createNonNativeAsset("USD", issuerB).toXdr(),
+                flutter_sdk.XdrInt32(flutter_sdk
+                    .StellarProtocolConstants.LIQUIDITY_POOL_FEE_V18));
+      envelope.v1!.tx.operations.single.body.changeTrustOp!.line =
+          flutter_sdk.XdrChangeTrustAsset(
+              flutter_sdk.XdrAssetType.ASSET_TYPE_POOL_SHARE)
+            ..liquidityPool = pool;
+      return 'web+stellar:tx?xdr='
+          '${Uri.encodeComponent(envelope.toEnvelopeXdrBase64())}';
+    }
+
+    const invalidEnvelope =
+        "The provided 'xdr' parameter is not a valid transaction envelope";
+
+    test('isValidSep7Uri accepts the pool share in stellar-core order', () {
+      final result =
+          Sep7.isValidSep7Uri(poolShareTrustUri(usdIssuerH, usdIssuer2));
+      expect(result.result, isTrue);
+      expect(result.reason, isNull);
+    });
+
+    test('isValidSep7Uri reports the reversed pool share as invalid', () {
+      final result =
+          Sep7.isValidSep7Uri(poolShareTrustUri(usdIssuer2, usdIssuerH));
+      expect(result.result, isFalse);
+      expect(result.reason, invalidEnvelope);
+    });
+
+    test('parseSep7Uri throws Sep7InvalidUri for the reversed pool share', () {
+      expect(
+        () => Sep7.parseSep7Uri(poolShareTrustUri(usdIssuer2, usdIssuerH)),
+        throwsA(isA<Sep7InvalidUri>()
+            .having((e) => e.message, 'message', invalidEnvelope)),
+      );
+    });
+  });
+
   // A query whose percent-encoding is not valid UTF-8 cannot be decoded.
   group('Sep7 undecodable query Tests', () {
     const undecodableUri = 'web+stellar:pay?destination=G%FF';

@@ -174,6 +174,65 @@ void main() {
       var op = decoded.operations.first as flutter_sdk.PaymentOperation;
       expect(op.amount, maxAmount);
     });
+
+    // Two USD assets whose issuers first differ at '2' and 'H'. stellar-core
+    // orders the assets of a pool share by the issuers' raw public key bytes,
+    // so the asset of usdIssuerH is assetA and the asset of usdIssuer2 is
+    // assetB.
+    const usdIssuerH =
+        "GDHXVH2CWS5EZLHKSHQXPLVWVJUNNXGLA2RBQQFS3LMMQIXD437QEIRQ";
+    const usdIssuer2 =
+        "GD2VSLB7BPYNKQIF2P632VIVMVXPMU2B5RJU2WO4GATAJRSIDC24ZDUO";
+
+    // An envelope with one change trust operation for the pool share of the
+    // USD assets of [issuerA] and [issuerB], in that order. The pool is set at
+    // XDR level because the SDK refuses to build a pool share whose assets
+    // are out of order.
+    String poolShareTrustEnvelope(String issuerA, String issuerB) {
+      var account = flutter_sdk.Account(sourceAccountId, BigInt.from(1));
+      var envelope = TxBuilder(account)
+          .addAssetSupport(IssuedAssetId(code: "USD", issuer: issuerA))
+          .build()
+          .toEnvelopeXdr();
+      var pool = flutter_sdk.XdrLiquidityPoolParameters(
+          flutter_sdk.XdrLiquidityPoolType.LIQUIDITY_POOL_CONSTANT_PRODUCT)
+        ..constantProduct =
+            flutter_sdk.XdrLiquidityPoolConstantProductParameters(
+                flutter_sdk.Asset.createNonNativeAsset("USD", issuerA).toXdr(),
+                flutter_sdk.Asset.createNonNativeAsset("USD", issuerB).toXdr(),
+                flutter_sdk.XdrInt32(flutter_sdk
+                    .StellarProtocolConstants.LIQUIDITY_POOL_FEE_V18));
+      envelope.v1!.tx.operations.single.body.changeTrustOp!.line =
+          flutter_sdk.XdrChangeTrustAsset(
+              flutter_sdk.XdrAssetType.ASSET_TYPE_POOL_SHARE)
+            ..liquidityPool = pool;
+      return envelope.toEnvelopeXdrBase64();
+    }
+
+    test('decodes a pool share change trust in stellar-core order', () {
+      var decoded = Wallet.testNet
+          .stellar()
+          .decodeTransaction(poolShareTrustEnvelope(usdIssuerH, usdIssuer2))
+          as flutter_sdk.Transaction;
+
+      var op = decoded.operations.single as flutter_sdk.ChangeTrustOperation;
+      var poolShare = op.asset as flutter_sdk.AssetTypePoolShare;
+      var assetA = poolShare.assetA as flutter_sdk.AssetTypeCreditAlphaNum4;
+      var assetB = poolShare.assetB as flutter_sdk.AssetTypeCreditAlphaNum4;
+      expect(assetA.code, "USD");
+      expect(assetA.issuerId, usdIssuerH);
+      expect(assetB.code, "USD");
+      expect(assetB.issuerId, usdIssuer2);
+    });
+
+    test('throws for a pool share change trust in reversed order', () {
+      var envelope = poolShareTrustEnvelope(usdIssuer2, usdIssuerH);
+      expect(
+        () => Wallet.testNet.stellar().decodeTransaction(envelope),
+        throwsA(isA<Exception>().having((e) => e.toString(), 'message',
+            contains('Assets are in wrong order'))),
+      );
+    });
   });
 
   group('Stellar sign', () {
