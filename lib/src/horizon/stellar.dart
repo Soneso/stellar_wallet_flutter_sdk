@@ -160,6 +160,10 @@ class Stellar {
   /// throws [ArgumentError]; other invalid content, such as an unknown
   /// union discriminant, throws an [Exception]. [RangeError] and
   /// [ArgumentError] are not caught by `on Exception catch`.
+  /// An envelope that nests a recursive XDR type, such as a claim predicate
+  /// or a contract value, deeper than 500 levels throws an [Exception] whose
+  /// message names the limit. Envelopes that the network accepts stay within
+  /// this limit.
   flutter_sdk.AbstractTransaction decodeTransaction(String xdr) {
     return flutter_sdk.AbstractTransaction.fromEnvelopeXdrString(xdr);
   }

@@ -103,10 +103,10 @@ abstract class Sep7 {
 
   /// Validates [uri] with [uriScheme]. `stellar_flutter_sdk` throws a
   /// [FormatException] for a query that is not valid percent-encoded UTF-8,
-  /// and reports some malformed 'xdr' envelopes by throwing an [Error] while
-  /// decoding them: a [RangeError] for an array count or length the input
-  /// cannot hold, an [ArgumentError] for a zero price denominator. Such a
-  /// [uri] yields an invalid result.
+  /// and such a [uri] yields an invalid result. It reports an 'xdr' envelope
+  /// it cannot decode as an invalid result with its own reason. An [Error]
+  /// that leaves `URIScheme.isValidSep7Url` yields an invalid result whose
+  /// reason names the error.
   static flutter_sdk.IsValidSep7UrlResult _validate(
       flutter_sdk.URIScheme uriScheme, String uri) {
     try {

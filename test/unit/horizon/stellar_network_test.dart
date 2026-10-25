@@ -233,6 +233,77 @@ void main() {
             contains('Assets are in wrong order'))),
       );
     });
+
+    test('decodes a transaction with the memo id 0', () {
+      var account = flutter_sdk.Account(sourceAccountId, BigInt.from(1));
+      var envelope = TxBuilder(account)
+          .transfer(destinationAccountId, NativeAssetId(), "1")
+          .build()
+          .toEnvelopeXdr();
+      envelope.v1!.tx.memo =
+          flutter_sdk.XdrMemo(flutter_sdk.XdrMemoType.MEMO_ID)
+            ..id = flutter_sdk.XdrUint64(BigInt.zero);
+
+      var decoded = Wallet.testNet
+          .stellar()
+          .decodeTransaction(envelope.toEnvelopeXdrBase64()) as flutter_sdk.Transaction;
+      expect(
+          decoded.memo,
+          isA<flutter_sdk.MemoId>()
+              .having((memo) => memo.getId(), 'id', BigInt.zero));
+    });
+
+    // An envelope with one create claimable balance operation whose claimant
+    // predicate is a chain of [levels] predicates: not predicates around one
+    // unconditional predicate.
+    String predicateChainEnvelope(int levels) {
+      var predicate = flutter_sdk.XdrClaimPredicate(
+          flutter_sdk.XdrClaimPredicateType.CLAIM_PREDICATE_UNCONDITIONAL);
+      for (var i = 1; i < levels; i++) {
+        predicate = flutter_sdk.XdrClaimPredicate(
+            flutter_sdk.XdrClaimPredicateType.CLAIM_PREDICATE_NOT)
+          ..notPredicate = predicate;
+      }
+      var account = flutter_sdk.Account(sourceAccountId, BigInt.from(1));
+      return flutter_sdk.TransactionBuilder(account)
+          .addOperation(flutter_sdk.CreateClaimableBalanceOperationBuilder(
+                  [flutter_sdk.Claimant(destinationAccountId, predicate)],
+                  flutter_sdk.Asset.NATIVE,
+                  "1")
+              .build())
+          .build()
+          .toEnvelopeXdrBase64();
+    }
+
+    test('decodes a predicate chain of 500 levels and refuses 501 levels', () {
+      var decoded = Wallet.testNet
+          .stellar()
+          .decodeTransaction(predicateChainEnvelope(500)) as flutter_sdk.Transaction;
+      var op = decoded.operations.single
+          as flutter_sdk.CreateClaimableBalanceOperation;
+      var predicate = op.claimants.single.predicate;
+      var levels = 1;
+      while (predicate.discriminant ==
+          flutter_sdk.XdrClaimPredicateType.CLAIM_PREDICATE_NOT) {
+        predicate = predicate.notPredicate!;
+        levels++;
+      }
+      expect(predicate.discriminant,
+          flutter_sdk.XdrClaimPredicateType.CLAIM_PREDICATE_UNCONDITIONAL);
+      expect(levels, 500);
+
+      var tooDeep = predicateChainEnvelope(501);
+      expect(
+        () => Wallet.testNet.stellar().decodeTransaction(tooDeep),
+        throwsA(isA<Exception>().having((e) => e.toString(), 'message',
+            contains('XDR decode depth limit exceeded (500)'))),
+      );
+      var result = Sep7.isValidSep7Uri(
+          'web+stellar:tx?xdr=${Uri.encodeComponent(tooDeep)}');
+      expect(result.result, isFalse);
+      expect(result.reason,
+          "The provided 'xdr' parameter is not a valid transaction envelope");
+    });
   });
 
   group('Stellar sign', () {

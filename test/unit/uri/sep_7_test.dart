@@ -215,19 +215,10 @@ void main() {
     const invalidEnvelope =
         "The provided 'xdr' parameter is not a valid transaction envelope";
 
-    final cases = <String, (Uint8List Function(), String)>{
-      'a negative operations count': (
-        negativeOperationsCount,
-        'XDR array count cannot be negative, got -1'
-      ),
-      'a negative signatures count': (
-        negativeSignaturesCount,
-        'XDR array count cannot be negative, got -1'
-      ),
-      'a zero price denominator': (
-        zeroPriceDenominator,
-        'Price denominator must not be zero: 1/0'
-      ),
+    final cases = <String, Uint8List Function()>{
+      'a negative operations count': negativeOperationsCount,
+      'a negative signatures count': negativeSignaturesCount,
+      'a zero price denominator': zeroPriceDenominator,
     };
 
     test('the unmodified envelopes are valid', () {
@@ -241,14 +232,11 @@ void main() {
       expect(Sep7.isValidSep7Uri(txUri(offer)).result, isTrue);
     });
 
-    cases.forEach((name, testCase) {
-      final (build, detail) = testCase;
-
+    cases.forEach((name, build) {
       test('isValidSep7Uri reports an envelope with $name as invalid', () {
         final result = Sep7.isValidSep7Uri(txUri(build()));
         expect(result.result, isFalse);
-        expect(result.reason, startsWith(invalidEnvelope));
-        expect(result.reason, contains(detail));
+        expect(result.reason, equals(invalidEnvelope));
       });
 
       test('parseSep7Uri throws Sep7InvalidUri for an envelope with $name',
@@ -256,8 +244,7 @@ void main() {
         expect(
           () => Sep7.parseSep7Uri(txUri(build())),
           throwsA(isA<Sep7InvalidUri>()
-              .having((e) => e.message, 'message', startsWith(invalidEnvelope))
-              .having((e) => e.message, 'message', contains(detail))),
+              .having((e) => e.message, 'message', equals(invalidEnvelope))),
         );
       });
 
@@ -273,8 +260,7 @@ void main() {
         expect(
           () => sep7Tx.addSignature(SigningKeyPair.fromSecret(fixedSecret)),
           throwsA(isA<Sep7InvalidUri>()
-              .having((e) => e.message, 'message', startsWith(invalidEnvelope))
-              .having((e) => e.message, 'message', contains(detail))),
+              .having((e) => e.message, 'message', equals(invalidEnvelope))),
         );
         expect(sep7Tx.getSignature(), isNull);
       });
@@ -343,6 +329,47 @@ void main() {
         throwsA(isA<Sep7InvalidUri>()
             .having((e) => e.message, 'message', invalidEnvelope)),
       );
+    });
+  });
+
+  // MEMO_ID is an unsigned 64-bit integer, so 0 is a valid memo id.
+  group('Sep7 memo id 0 Tests', () {
+    // A 'tx' URI whose envelope carries the memo id 0, set at XDR level.
+    String memoIdZeroTxUri() {
+      final envelope = flutter_sdk.TransactionBuilder(
+              flutter_sdk.Account(fixedSecretAccountId, BigInt.from(1)))
+          .addOperation(flutter_sdk.PaymentOperationBuilder(
+                  destinationAccountId, flutter_sdk.Asset.NATIVE, "1")
+              .build())
+          .build()
+          .toEnvelopeXdr();
+      envelope.v1!.tx.memo =
+          flutter_sdk.XdrMemo(flutter_sdk.XdrMemoType.MEMO_ID)
+            ..id = flutter_sdk.XdrUint64(BigInt.zero);
+      return 'web+stellar:tx?xdr='
+          '${Uri.encodeComponent(envelope.toEnvelopeXdrBase64())}';
+    }
+
+    const payUri = 'web+stellar:pay?destination=$destinationAccountId'
+        '&memo=0&memo_type=MEMO_ID';
+
+    test('isValidSep7Uri accepts a tx uri whose envelope has the memo id 0',
+        () {
+      final result = Sep7.isValidSep7Uri(memoIdZeroTxUri());
+      expect(result.result, isTrue);
+      expect(result.reason, isNull);
+    });
+
+    test('isValidSep7Uri and parseSep7Uri accept a pay uri with the memo id 0',
+        () {
+      final result = Sep7.isValidSep7Uri(payUri);
+      expect(result.result, isTrue);
+      expect(result.reason, isNull);
+
+      final parsed = Sep7.parseSep7Uri(payUri);
+      expect(parsed, isA<Sep7Pay>());
+      expect((parsed as Sep7Pay).getMemo(), '0');
+      expect(parsed.getMemoType(), Sep7.memoTypeId);
     });
   });
 
@@ -769,6 +796,20 @@ void main() {
       final parsed = Sep7.parseSep7Uri(pay.toString());
       expect(parsed.getSignature(), signature);
       expect(parsed.toString(), pay.toString());
+    });
+
+    test('addSignature throws ArgumentError when signature is the first param',
+        () {
+      const signature = 'c2lnbmF0dXJl';
+      final parsed = Sep7.parseSep7Uri('web+stellar:tx?signature=$signature'
+          '&xdr=${Uri.encodeComponent(classicTxXdr)}');
+
+      expect(
+        () => parsed.addSignature(SigningKeyPair.fromSecret(fixedSecret)),
+        throwsA(isA<ArgumentError>().having((e) => e.message, 'message',
+            "sep7 url already contains a 'signature' parameter")),
+      );
+      expect(parsed.getSignature(), signature);
     });
   });
 }
