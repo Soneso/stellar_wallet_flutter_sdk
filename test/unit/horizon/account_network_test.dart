@@ -419,6 +419,34 @@ void main() {
       expect(transactions.first.feeCharged, 100);
     });
 
+    test('returns a transaction record with the memo id 0', () async {
+      const hash =
+          'aaaa0000000000000000000000000000000000000000000000000000000a';
+      final mock = MockClient((request) async {
+        if (request.url.path == '/accounts/$accountId') {
+          return http.Response(json.encode(accountJson()), 200);
+        }
+        if (request.url.path == '/accounts/$accountId/transactions') {
+          return http.Response(
+              json.encode(transactionsPage([
+                {...transactionRecord(hash), 'memo_type': 'id', 'memo': '0'},
+              ])),
+              200);
+        }
+        fail('Unexpected request path: ${request.url.path}');
+      });
+
+      final transactions =
+          await accountServiceWith(mock).loadRecentTransactions(accountId);
+
+      expect(transactions, hasLength(1));
+      expect(transactions.single.hash, hash);
+      expect(
+          transactions.single.memo,
+          isA<flutter_sdk.MemoId>()
+              .having((memo) => memo.getId(), 'id', BigInt.zero));
+    });
+
     test('returns an empty list when the account does not exist (404)',
         () async {
       var sawTransactions = false;

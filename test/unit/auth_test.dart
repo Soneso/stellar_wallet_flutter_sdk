@@ -488,6 +488,63 @@ void main() {
     }
   });
 
+  test('test memo id 0 success', () async {
+    // A challenge with the memo id 0, set at XDR level and signed by the
+    // server over the signature base of the XDR transaction.
+    final envelope =
+        TransactionBuilder(Account(serverAccountId, BigInt.from(-1)))
+            .addOperation(validFirstManageDataOp(userAccountId))
+            .addOperation(validSecondManageDataOp())
+            .addPreconditions(validTimeBounds())
+            .build()
+            .toEnvelopeXdr();
+    envelope.v1!.tx.memo = XdrMemo(XdrMemoType.MEMO_ID)
+      ..id = XdrUint64(BigInt.zero);
+    final signatureBase = XdrDataOutputStream()
+      ..write(Network.TESTNET.networkId)
+      ..writeInt(XdrEnvelopeType.ENVELOPE_TYPE_TX.value);
+    XdrTransaction.encode(signatureBase, envelope.v1!.tx);
+    final transactionHash = Util.hash(Uint8List.fromList(signatureBase.bytes));
+    envelope.v1!.signatures = [serverKeyPair.signDecorated(transactionHash)];
+
+    http.Client anchorMock = MockClient((request) async {
+      if (request.url.toString().contains(anchorDomain) &&
+          request.url.toString().contains("stellar.toml")) {
+        return http.Response(anchorToml, 200);
+      }
+      if (request.url.toString().startsWith(webAuthEndpoint) &&
+          request.method == "GET" &&
+          request.url.queryParameters['account'] == userAccountId &&
+          request.url.queryParameters['memo'] == '0') {
+        return http.Response(
+            json.encode({'transaction': envelope.toEnvelopeXdrBase64()}), 200);
+      }
+      if (request.url.toString().startsWith(webAuthEndpoint) &&
+          request.method == "POST") {
+        // validate if the challenge transaction has been signed by the user
+        final signatures = XdrTransactionEnvelope.fromEnvelopeXdrString(
+                json.decode(request.body)['transaction'])
+            .v1!
+            .signatures;
+        if (signatures.length == 2 &&
+            KeyPair.fromAccountId(userAccountId).verify(
+                transactionHash, signatures[1].signature.signature)) {
+          return http.Response(requestJWTSuccess(), 200); // OK
+        }
+      }
+      final mapJson = {'error': "Bad request"};
+      return http.Response(json.encode(mapJson), 400);
+    });
+
+    final sep10 = await wallet_sdk.Wallet.testNet
+        .anchor(anchorDomain, httpClient: anchorMock)
+        .sep10();
+    final authToken = await sep10.authenticate(
+        wallet_sdk.SigningKeyPair.fromSecret(userSecretSeed),
+        memoId: 0);
+    expect(authToken.jwt, successJWTToken);
+  });
+
   test('test basic get challenge failure', () async {
     http.Client anchorMock = MockClient((request) async {
       if (request.url.toString().contains(anchorDomain) &&
