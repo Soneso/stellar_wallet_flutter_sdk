@@ -1,3 +1,9 @@
+## [1.1.9] - 15.Nov.2026.
+- update to `stellar_flutter_sdk` 3.11.0; the minimum of Dart 3.8 and Flutter 3.32 is unchanged
+- `AccountService.getInfo`, `accountExists`, `loadRecentPayments`, `loadRecentTransactions` and the path methods of `Stellar` throw `ArgumentError` without a Horizon request for an address or asset issuer starting with `S` or `s`. In 1.1.8 the wallet sent such a value, which may be a secret seed, to Horizon
+- for a `stellar.toml` field, section, or list element of the wrong type, the `TomlNotFoundException` of `Anchor` and `Recovery.sep10Auth` names the field and the type found. So does the `AnchorAuthException` of `Sep10.authenticate` with a client domain, which carries the `FormatException` as its cause, and `Sep7.verifySignature` returns false for such an origin domain. In 1.1.8 these messages were the text of a Dart `TypeError` or `NoSuchMethodError`, the `AnchorAuthException` had no cause, and `Sep7.verifySignature` threw that error
+- the error for an invalid `TxBuilder` payment amount or trust limit, or `SponsoringBuilder` offer price or offer id, shows a possible secret seed as `a secret seed (S...)`. In 1.1.8 the message showed the value
+
 ## [1.1.8] - 25.Oct.2026.
 - update to `stellar_flutter_sdk` 3.10.0; the minimum of Dart 3.8 and Flutter 3.32 is unchanged
 - the wallet accepts the memo id 0. `Stellar.decodeTransaction` decodes an envelope with this memo, and `AccountService.loadRecentTransactions` returns a page that holds a transaction with it. The SEP-7 methods accept a `tx` link with such an envelope and a `pay` link with `memo=0` and `memo_type=MEMO_ID`. `Sep10.authenticate` completes with `memoId: 0`. In 1.1.7 `Stellar.decodeTransaction` and `AccountService.loadRecentTransactions` threw `Exception`, the SEP-7 methods treated these URIs as invalid, and `Sep10.authenticate` threw `AnchorAuthException`

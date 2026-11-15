@@ -292,6 +292,20 @@ void main() {
       expect(asset.code, "USD");
       expect(asset.issuerId, issuerAccountId);
     });
+
+    test('transfer leaves an amount shaped like a secret seed out of the error',
+        () {
+      final seed = SigningKeyPair.random().secretKey;
+      var tx = newBuilder()
+          .transfer(destinationAccountId, nativeAsset, seed)
+          .build();
+
+      expect(
+        () => tx.toEnvelopeXdrBase64(),
+        throwsA(isA<Exception>().having((e) => '$e', 'text',
+            'Exception: Not a decimal amount: a secret seed (S...)')),
+      );
+    });
   });
 
   group('TxBuilder strictSend Tests', () {
