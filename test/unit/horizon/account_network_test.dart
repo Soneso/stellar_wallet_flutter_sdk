@@ -549,4 +549,44 @@ void main() {
       expect(capturedOrder, 'desc');
     });
   });
+
+  group('secret seed as address', () {
+    test('throws ArgumentError for a secret seed without a Horizon request',
+        () async {
+      final seed = SigningKeyPair.random().secretKey;
+      var requests = 0;
+      final mock = MockClient((request) async {
+        requests++;
+        return http.Response(notFoundBody(), 404);
+      });
+      final stellar = Wallet(StellarConfiguration.testNet,
+              applicationConfiguration:
+                  ApplicationConfiguration(defaultClient: mock))
+          .stellar();
+      final service = stellar.account();
+      final seedIssuedAsset = IssuedAssetId(code: 'USD', issuer: seed);
+
+      for (final (name, call) in <(String, Future<Object> Function())>[
+        ('accountId', () => service.getInfo(seed)),
+        ('accountId', () => service.getInfo(seed.toLowerCase())),
+        ('accountId', () => service.accountExists(seed)),
+        ('accountId', () => service.loadRecentPayments(seed)),
+        ('accountId', () => service.loadRecentTransactions(seed)),
+        (
+          'asset.issuerId',
+          () => stellar.findStrictSendPathForDestinationAddress(
+              seedIssuedAsset, '10', accountId)
+        ),
+      ]) {
+        await expectLater(
+          call(),
+          throwsA(isA<ArgumentError>()
+              .having((e) => e.name, 'name', name)
+              .having((e) => e.message, 'message',
+                  'got a secret seed (S...), which is not sent to Horizon')),
+        );
+      }
+      expect(requests, 0);
+    });
+  });
 }

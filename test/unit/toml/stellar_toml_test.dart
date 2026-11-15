@@ -3,6 +3,8 @@
 // found in the LICENSE file.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
 import 'package:stellar_wallet_flutter_sdk/stellar_wallet_flutter_sdk.dart';
 
@@ -659,6 +661,22 @@ DIRECT_PAYMENT_SERVER = "https://api.example.com/sep31"
       expect(minimal.hasAuth, isFalse);
       expect(minimal.kycServer, isNull);
       expect(minimal.anchorQuoteServer, isNull);
+    });
+  });
+
+  group('Anchor.sep1 Tests', () {
+    test('throws TomlNotFoundException naming a field of the wrong type',
+        () async {
+      final client = MockClient(
+          (request) async => http.Response('SIGNING_KEY = 1', 200));
+      final anchor = Wallet.testNet.anchor('example.com', httpClient: client);
+
+      await expectLater(
+        anchor.sep1(),
+        throwsA(isA<TomlNotFoundException>().having((e) => e.message,
+            'message',
+            'FormatException: Invalid stellar.toml field SIGNING_KEY: found int')),
+      );
     });
   });
 }

@@ -6,6 +6,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
 import 'package:stellar_wallet_flutter_sdk/src/exceptions/exceptions.dart';
 import 'package:stellar_wallet_flutter_sdk/src/horizon/account.dart';
@@ -810,6 +812,27 @@ void main() {
             "sep7 url already contains a 'signature' parameter")),
       );
       expect(parsed.getSignature(), signature);
+    });
+
+    test(
+        'verifySignature returns false when the origin domain toml has a '
+        'field of the wrong type', () async {
+      var tomlRequests = 0;
+      final client = MockClient((request) async {
+        if (request.url.toString() ==
+            'https://soneso.com/.well-known/stellar.toml') {
+          tomlRequests++;
+          return http.Response('URI_REQUEST_SIGNING_KEY = 1', 200);
+        }
+        return http.Response('', 404);
+      });
+      final pay =
+          Sep7Pay.forDestination(destinationAccountId, httpClient: client);
+      pay.setOriginDomain('soneso.com');
+      pay.addSignature(SigningKeyPair.fromSecret(fixedSecret));
+
+      expect(await pay.verifySignature(), isFalse);
+      expect(tomlRequests, 1);
     });
   });
 }
