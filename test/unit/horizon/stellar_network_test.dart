@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -413,6 +414,57 @@ void main() {
           Wallet(stellarConfig).stellar().makeFeeBump(feeAddress, innerTx());
       // 300 * 2 = 600.
       expect(feeBump.fee, 600);
+    });
+
+    test('refuses an inner transaction with a value over its XDR limit', () {
+      var account = flutter_sdk.Account(sourceAccountId, BigInt.from(20));
+      var inner = flutter_sdk.TransactionBuilder(account)
+          .addOperation(
+            flutter_sdk.ManageDataOperationBuilder(
+              "key",
+              Uint8List(65),
+            ).build(),
+          )
+          .build();
+      var feeAddress = PublicKeyPair.fromAccountId(feeAccountId);
+
+      expect(
+        () => Wallet.testNet.stellar().makeFeeBump(feeAddress, inner),
+        throwsA(
+          isA<ValidationException>().having(
+            (e) => e.message,
+            'message',
+            'The transaction cannot be encoded: '
+                'RangeError: XDR length 65 exceeds the declared maximum of 64',
+          ),
+        ),
+      );
+    });
+
+    test('refuses an inner transaction with an invalid amount', () {
+      var account = flutter_sdk.Account(sourceAccountId, BigInt.from(20));
+      var inner = flutter_sdk.TransactionBuilder(account)
+          .addOperation(
+            flutter_sdk.PaymentOperationBuilder(
+              destinationAccountId,
+              flutter_sdk.Asset.NATIVE,
+              ".5",
+            ).build(),
+          )
+          .build();
+      var feeAddress = PublicKeyPair.fromAccountId(feeAccountId);
+
+      expect(
+        () => Wallet.testNet.stellar().makeFeeBump(feeAddress, inner),
+        throwsA(
+          isA<ValidationException>().having(
+            (e) => e.message,
+            'message',
+            'The transaction cannot be encoded: '
+                'Exception: Not a decimal amount: .5',
+          ),
+        ),
+      );
     });
   });
 

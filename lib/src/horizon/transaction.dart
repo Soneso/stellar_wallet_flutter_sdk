@@ -6,13 +6,16 @@ import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
 import 'package:stellar_wallet_flutter_sdk/src/asset/asset_id.dart';
 import 'package:stellar_wallet_flutter_sdk/src/exceptions/exceptions.dart';
 import 'package:stellar_wallet_flutter_sdk/src/horizon/account.dart';
+import 'package:stellar_wallet_flutter_sdk/src/horizon/transaction_encoding.dart';
 
 abstract class CommonTxBuilder<T> {
   late flutter_sdk.TransactionBuilder sdkBuilder;
   late flutter_sdk.TransactionBuilderAccount sourceAccount;
+  final _DeferredIncrementAccount _builderAccount;
 
-  CommonTxBuilder(this.sourceAccount) {
-    sdkBuilder = flutter_sdk.TransactionBuilder(sourceAccount);
+  CommonTxBuilder(this.sourceAccount)
+    : _builderAccount = _DeferredIncrementAccount(sourceAccount) {
+    sdkBuilder = flutter_sdk.TransactionBuilder(_builderAccount);
   }
 
   CommonTxBuilder<T> addAccountSigner(
@@ -68,8 +71,81 @@ abstract class CommonTxBuilder<T> {
     return this;
   }
 
+  /// Builds the transaction and increments the sequence number of
+  /// [sourceAccount] by one.
+  ///
+  /// Throws a [ValidationException] whose message holds the reason of
+  /// `stellar_flutter_sdk` when the SDK refuses to build the transaction,
+  /// such as for more than 100 operations, or to encode it, such as for a
+  /// value over its XDR limit or an invalid amount. A refused build leaves
+  /// the sequence number of [sourceAccount] unchanged.
   flutter_sdk.Transaction build() {
-    return sdkBuilder.build();
+    return _builderAccount.incrementAfter(() {
+      final transaction = refusalAsValidation(
+        'The transaction cannot be built',
+        sdkBuilder.build,
+      );
+      checkEncodable(transaction);
+      return transaction;
+    });
+  }
+}
+
+/// The account that a wallet builder hands to its SDK builder.
+///
+/// It forwards the account id, the sequence numbers and the muxed account of
+/// the caller's account. The SDK builder increments the sequence number when it
+/// has created the transaction, before the wallet builder encodes it, and the
+/// SDK accounts offer no way to take it back. So while [incrementAfter] runs,
+/// the increment is held back and applied to the caller's account only when
+/// the build succeeds. Outside [incrementAfter], as when `sdkBuilder.build()`
+/// is called directly, the increment goes to the caller's account at once.
+class _DeferredIncrementAccount
+    implements flutter_sdk.TransactionBuilderAccount {
+  _DeferredIncrementAccount(this._account);
+
+  final flutter_sdk.TransactionBuilderAccount _account;
+  bool _holding = false;
+  bool _incrementHeld = false;
+
+  @override
+  String get accountId => _account.accountId;
+
+  @override
+  BigInt get sequenceNumber => _account.sequenceNumber;
+
+  @override
+  BigInt get incrementedSequenceNumber => _account.incrementedSequenceNumber;
+
+  @override
+  flutter_sdk.MuxedAccount get muxedAccount => _account.muxedAccount;
+
+  @override
+  void incrementSequenceNumber() {
+    if (_holding) {
+      _incrementHeld = true;
+    } else {
+      _account.incrementSequenceNumber();
+    }
+  }
+
+  /// Returns the result of [build] and then increments the caller's account
+  /// once if the SDK builder asked for it during [build]. When [build]
+  /// throws, the caller's account keeps its sequence number.
+  flutter_sdk.Transaction incrementAfter(
+    flutter_sdk.Transaction Function() build,
+  ) {
+    _holding = true;
+    try {
+      final flutter_sdk.Transaction transaction = build();
+      if (_incrementHeld) {
+        _account.incrementSequenceNumber();
+      }
+      return transaction;
+    } finally {
+      _holding = false;
+      _incrementHeld = false;
+    }
   }
 }
 

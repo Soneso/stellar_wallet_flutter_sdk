@@ -7,6 +7,7 @@ import 'dart:math';
 import 'package:logger/logger.dart';
 
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
+import 'package:stellar_wallet_flutter_sdk/src/horizon/transaction_encoding.dart';
 import 'package:stellar_wallet_flutter_sdk/stellar_wallet_flutter_sdk.dart';
 
 /// Interaction with the Stellar Network.
@@ -217,14 +218,28 @@ class Stellar {
   /// for the given [feeAddress] that will pay the transaction's fee and
   /// the [transaction] for which fee should be paid (inner transaction).
   /// Optional parameter is [baseFee] If not specified, [cfg.stellar.baseFee] will be used.
+  ///
+  /// Throws a [ValidationException] whose message holds the reason of
+  /// `stellar_flutter_sdk` when the SDK refuses to encode the inner
+  /// transaction or the fee bump transaction, such as for an inner transaction
+  /// that holds an invalid amount or a value over its XDR limit.
   flutter_sdk.FeeBumpTransaction makeFeeBump(
       AccountKeyPair feeAddress, flutter_sdk.Transaction transaction,
       {int? baseFee}) {
     var txBaseFee = baseFee ?? cfg.stellar.baseFee;
-    var txBuilder = flutter_sdk.FeeBumpTransactionBuilder(transaction)
+    // An inner transaction built without the wallet's builders has not been
+    // checked. The SDK converts it when it creates the builder, which refuses
+    // an invalid amount, and checks the XDR limits only when it encodes.
+    final txBuilder = refusalAsValidation(
+      'The transaction cannot be encoded',
+      () => flutter_sdk.FeeBumpTransactionBuilder(transaction),
+    );
+    var feeBump = txBuilder
         .setBaseFee(txBaseFee)
-        .setFeeAccount(feeAddress.address);
-    return txBuilder.build();
+        .setFeeAccount(feeAddress.address)
+        .build();
+    checkEncodable(feeBump);
+    return feeBump;
   }
 
   /// Fetches available paths on the Stellar network between the [destinationAddress], and the [sourceAssetId] sent by the source account
