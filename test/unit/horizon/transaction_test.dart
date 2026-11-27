@@ -2,6 +2,8 @@
 // Use of this source code is governed by a license that can be
 // found in the LICENSE file.
 
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stellar_flutter_sdk/stellar_flutter_sdk.dart' as flutter_sdk;
 import 'package:stellar_wallet_flutter_sdk/stellar_wallet_flutter_sdk.dart';
@@ -275,12 +277,12 @@ void main() {
       expect(op.amount, maxAmount);
     });
 
-    test('transfer preserves the minimum amount string ".0000001"', () {
+    test('transfer preserves the minimum amount string', () {
       var tx = newBuilder()
-          .transfer(destinationAccountId, usdAsset, ".0000001")
+          .transfer(destinationAccountId, usdAsset, minAmount)
           .build();
       var op = tx.operations.first as flutter_sdk.PaymentOperation;
-      expect(op.amount, ".0000001");
+      expect(op.amount, minAmount);
     });
 
     test('transfer sets the credit asset code and issuer', () {
@@ -296,14 +298,22 @@ void main() {
     test('transfer leaves an amount shaped like a secret seed out of the error',
         () {
       final seed = SigningKeyPair.random().secretKey;
-      var tx = newBuilder()
-          .transfer(destinationAccountId, nativeAsset, seed)
-          .build();
+      var builder = newBuilder().transfer(
+        destinationAccountId,
+        nativeAsset,
+        seed,
+      );
 
       expect(
-        () => tx.toEnvelopeXdrBase64(),
-        throwsA(isA<Exception>().having((e) => '$e', 'text',
-            'Exception: Not a decimal amount: a secret seed (S...)')),
+        () => builder.build(),
+        throwsA(
+          isA<ValidationException>().having(
+            (e) => e.message,
+            'message',
+            'The transaction cannot be encoded: '
+                'Exception: Not a decimal amount: a secret seed (S...)',
+          ),
+        ),
       );
     });
   });
@@ -670,6 +680,173 @@ void main() {
       expect(tx2.sequenceNumber, BigInt.from(102));
       // the underlying account sequence has advanced by two.
       expect(account.sequenceNumber, BigInt.from(102));
+    });
+
+    test('build refuses a value over its XDR limit with the SDK reason', () {
+      var builder = newBuilder().addOperation(
+        flutter_sdk.ManageDataOperationBuilder("key", Uint8List(65)).build(),
+      );
+
+      expect(
+        () => builder.build(),
+        throwsA(
+          isA<ValidationException>().having(
+            (e) => e.message,
+            'message',
+            'The transaction cannot be encoded: '
+                'RangeError: XDR length 65 exceeds the declared maximum of 64',
+          ),
+        ),
+      );
+    });
+
+    test('a refused build leaves the sequence number to the next build', () {
+      var account = flutter_sdk.Account(sourceAccountId, BigInt.from(41));
+      flutter_sdk.Operation dataOperation(int length) =>
+          flutter_sdk.ManageDataOperationBuilder(
+            "key",
+            Uint8List(length),
+          ).build();
+
+      // A builder cannot drop an operation, so the corrected transaction is
+      // built by a new builder on the same account.
+      var refused = TxBuilder(account).addOperation(dataOperation(65));
+      expect(() => refused.build(), throwsA(isA<ValidationException>()));
+      expect(account.sequenceNumber, BigInt.from(41));
+
+      var tx = TxBuilder(account).addOperation(dataOperation(64)).build();
+      expect(tx.sequenceNumber, BigInt.from(42));
+      expect(account.sequenceNumber, BigInt.from(42));
+    });
+
+    test('sdkBuilder.build() increments the source account at once', () {
+      var account = flutter_sdk.Account(sourceAccountId, BigInt.from(41));
+      var builder = TxBuilder(account)..lockAccountMasterKey();
+
+      var tx = builder.sdkBuilder.build();
+
+      expect(tx.sequenceNumber, BigInt.from(42));
+      expect(account.sequenceNumber, BigInt.from(42));
+    });
+
+    test('build refuses more than 100 operations with the SDK reason', () {
+      var account = flutter_sdk.Account(sourceAccountId, BigInt.from(41));
+      var builder = TxBuilder(account);
+      for (var i = 0; i < 101; i++) {
+        builder.lockAccountMasterKey();
+      }
+
+      expect(
+        () => builder.build(),
+        throwsA(
+          isA<ValidationException>().having(
+            (e) => e.message,
+            'message',
+            'The transaction cannot be built: Exception: A transaction '
+                'holds at most 100 operations, 101 were added',
+          ),
+        ),
+      );
+      expect(account.sequenceNumber, BigInt.from(41));
+    });
+
+    test('build refuses a transaction without operations', () {
+      var account = flutter_sdk.Account(sourceAccountId, BigInt.from(41));
+
+      expect(
+        () => TxBuilder(account).build(),
+        throwsA(
+          isA<ValidationException>().having(
+            (e) => e.message,
+            'message',
+            'The transaction cannot be built: '
+                'Exception: At least one operation required',
+          ),
+        ),
+      );
+      expect(account.sequenceNumber, BigInt.from(41));
+    });
+
+    test('build refuses a payment of a liquidity pool share', () {
+      var account = flutter_sdk.Account(sourceAccountId, BigInt.from(41));
+      var poolShare = flutter_sdk.AssetTypePoolShare(
+        assetA: flutter_sdk.Asset.NATIVE,
+        assetB: usdAsset.toAsset(),
+      );
+      var builder = TxBuilder(account).addOperation(
+        flutter_sdk.PaymentOperationBuilder(
+          destinationAccountId,
+          poolShare,
+          "5",
+        ).build(),
+      );
+
+      expect(
+        () => builder.build(),
+        throwsA(
+          isA<ValidationException>().having(
+            (e) => e.message,
+            'message',
+            'The transaction cannot be encoded: Unsupported operation: '
+                'Pool share assets cannot be represented as XdrAsset. '
+                'Use toXdrChangeTrustAsset() instead.',
+          ),
+        ),
+      );
+      expect(account.sequenceNumber, BigInt.from(41));
+    });
+
+    test('a refusal inside a sponsoring block leaves the sequence number', () {
+      var account = flutter_sdk.Account(sourceAccountId, BigInt.from(41));
+      var sponsor = PublicKeyPair.fromAccountId(sponsorAccountId);
+      var dataOperation = flutter_sdk.ManageDataOperationBuilder(
+        "key",
+        Uint8List(65),
+      ).build();
+      // The sponsoring builder holds its own account for the sponsored
+      // address, so its refused build could only have incremented that one.
+      late flutter_sdk.TransactionBuilderAccount sponsoringAccount;
+
+      expect(
+        () => TxBuilder(account).sponsoring(sponsor, (builder) {
+          sponsoringAccount = builder.sourceAccount;
+          builder.addManageDataOperation(dataOperation);
+        }),
+        throwsA(
+          isA<ValidationException>().having(
+            (e) => e.message,
+            'message',
+            'The transaction cannot be encoded: '
+                'RangeError: XDR length 65 exceeds the declared maximum of 64',
+          ),
+        ),
+      );
+      expect(identical(sponsoringAccount, account), isFalse);
+      expect(sponsoringAccount.sequenceNumber, BigInt.zero);
+      expect(account.sequenceNumber, BigInt.from(41));
+    });
+
+    test('a muxed source account is the source and is incremented once', () {
+      var account = flutter_sdk.Account(
+        sourceAccountId,
+        BigInt.from(41),
+        muxedAccountMed25519Id: BigInt.from(7),
+      );
+
+      var tx = TxBuilder(account).lockAccountMasterKey().build();
+
+      expect(
+        tx.sourceAccount.accountId,
+        "MBWMCCC3NHSKLAOJDBKKYW7SSH2PFTTNVFKWSGLWGDLEBKLOVP5JKAAAAAAAAAAAA62XU",
+      );
+      expect(tx.sequenceNumber, BigInt.from(42));
+      expect(account.sequenceNumber, BigInt.from(42));
+
+      var refused = TxBuilder(account).addOperation(
+        flutter_sdk.ManageDataOperationBuilder("key", Uint8List(65)).build(),
+      );
+      expect(() => refused.build(), throwsA(isA<ValidationException>()));
+      expect(account.sequenceNumber, BigInt.from(42));
     });
 
     test('sequence numbers above 2^53 are preserved exactly', () {
